@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Práctica de Inventario - Códigos de Barra</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .setup-panel, .practice-panel {
+            padding: 30px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: monospace;
+        }
+
+        .file-upload {
+            border: 2px dashed #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .file-upload:hover {
+            background-color: #f5f5f5;
+        }
+
+        .file-upload input {
+            display: none;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .practice-display {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            transition: width 0.3s;
+        }
+
+        .code-display {
+            margin: 40px 0;
+        }
+
+        #barcodeCanvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .code-number {
+            font-size: 3em;
+            font-weight: bold;
+            color: #333;
+            font-family: monospace;
+            letter-spacing: 4px;
+        }
+
+        .quantity-input-section {
+            margin-top: 30px;
+        }
+
+        .quantity-input-section input {
+            width: 200px;
+            padding: 15px;
+            font-size: 24px;
+            text-align: center;
+            border: 3px solid #667eea;
+            border-radius: 8px;
+        }
+
+        .quantity-display {
+            font-size: 4em;
+            font-weight: bold;
+            color: #667eea;
+            background: #f0f4ff;
+            padding: 30px;
+            border-radius: 12px;
+            border: 3px solid #667eea;
+            display: inline-block;
+            min-width: 150px;
+        }
+
+        .timer {
+            font-size: 1.5em;
+            color: #667eea;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .results-panel {
+            padding: 30px;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .results-table th {
+            background: #f5f5f5;
+            font-weight: 600;
+        }
+
+        .total-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.5em;
+            margin-top: 20px;
+        }
+
+        .info-text {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .counter {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 Práctica de Inventario</h1>
+            <p>Sistema de entrenamiento para escaneo y digitación</p>
+        </div>
+
+        <!-- Panel de Configuración -->
+        <div id="setupPanel" class="setup-panel">
+            <div class="form-group">
+                <label>Cargar Códigos:</label>
+                <div style="margin-bottom: 15px;">
+                    <div class="file-upload" onclick="document.getElementById('fileInput').click()">
+                        <p>📁 Click para cargar archivo (.txt o .xlsx)</p>
+                        <p class="info-text">O arrastra un archivo aquí</p>
+                        <input type="file" id="fileInput" accept=".txt,.xlsx,.xls">
+                    </div>
+                    <p id="fileName" class="info-text" style="margin-top: 10px;"></p>
+                </div>
+                
+                <label>O ingresa códigos manualmente (uno por línea):</label>
+                <textarea id="manualInput" placeholder="Ejemplo:&#10;7501234567890&#10;7501234567891&#10;7501234567892"></textarea>
+            </div>
+
+            <div class="options-grid">
+                <div class="form-group">
+                    <label>Modo de visualización:</label>
+                    <select id="displayMode">
+                        <option value="barcode">Código de Barras</option>
+                        <option value="number">Código Numérico</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Orden de presentación:</label>
+                    <select id="orderMode">
+                        <option value="sequential">Secuencial</option>
+                        <option value="random">Aleatorio</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Tiempo por código (segundos):</label>
+                    <input type="number" id="timePerCode" value="10" min="5" max="60">
+                </div>
+
+                <div class="form-group">
+                    <label>Modo de práctica:</label>
+                    <select id="practiceMode">
+                        <option value="timed">Con tiempo límite</option>
+                        <option value="manual">Avance manual</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Cantidad mínima:</label>
+                    <input type="number" id="minQuantity" value="1" min="1" max="9999">
+                </div>
+
+                <div class="form-group">
+                    <label>Cantidad máxima:</label>
+                    <input type="number" id="maxQuantity" value="100" min="1" max="9999">
+                </div>
+            </div>
+
+            <div class="options-grid" style="grid-template-columns: 1fr;">
+            </div>
+
+            <div style="margin-top: 30px;">
+                <button class="btn" onclick="startPractice()">🚀 Comenzar Práctica</button>
+            </div>
+        </div>
+
+        <!-- Panel de Práctica -->
+        <div id="practicePanel" class="practice-panel hidden">
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+            </div>
+
+            <div class="counter">
+                <span>Código <span id="currentIndex">1</span> de <span id="totalCodes">0</span></span>
+            </div>
+
+            <div id="timerDisplay" class="timer"></div>
+
+            <div class="practice-display">
+                <div id="codeDisplay" class="code-display">
+                    <!-- Aquí se mostrará el código -->
+                </div>
+
+                <div class="quantity-input-section">
+                    <label style="font-size: 1.2em; margin-bottom: 10px; display: block;">Cantidad a digitar:</label>
+                    <div class="quantity-display" id="quantityDisplay">0</div>
+                    <div style="margin-top: 20px;">
+                        <button class="btn" onclick="nextCode()" style="width: auto; padding: 12px 40px;">✓ Siguiente</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="cancelPractice()">❌ Cancelar Práctica</button>
+            </div>
+        </div>
+
+        <!-- Panel de Resultados -->
+        <div id="resultsPanel" class="results-panel hidden">
+            <h2 style="margin-bottom: 20px;">📊 Resultados de la Práctica</h2>
+            
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Código</th>
+                        <th>Cantidad</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsTableBody">
+                </tbody>
+            </table>
+
+            <div class="total-section">
+                <div>Total General:</div>
+                <div style="font-size: 1.5em; font-weight: bold; margin-top: 10px;" id="totalQuantity">0</div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <button class="btn" onclick="resetApp()">🔄 Nueva Práctica</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let codes = [];
+        let currentCodeIndex = 0;
+        let currentQuantity = 0;
+        let results = [];
+        let timer = null;
+        let timeRemaining = 0;
+
+        // Manejo de archivos
+        const fileInput = document.getElementById('fileInput');
+        fileInput.addEventListener('change', handleFileUpload);
+
+        // Drag and drop
+        const fileUpload = document.querySelector('.file-upload');
+        fileUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUpload.style.backgroundColor = '#f0f0f0';
+        });
+
+        fileUpload.addEventListener('dragleave', () => {
+            fileUpload.style.backgroundColor = '';
+        });
+
+        fileUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUpload.style.backgroundColor = '';
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileUpload({ target: { files: files } });
+            }
+        });
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            document.getElementById('fileName').textContent = `Archivo cargado: ${file.name}`;
+
+            const reader = new FileReader();
+            
+            if (file.name.endsWith('.txt')) {
+                reader.onload = (e) => {
+                    const content = e.target.result;
+                    document.getElementById('manualInput').value = content;
+                };
+                reader.readAsText(file);
+            } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                reader.onload = (e) => {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                    
+                    const codesList = jsonData.flat().filter(cell => cell && cell.toString().trim() !== '');
+                    document.getElementById('manualInput').value = codesList.join('\n');
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        function startPractice() {
+            const manualInput = document.getElementById('manualInput').value.trim();
+            
+            if (!manualInput) {
+                alert('Por favor, ingresa o carga códigos de barras antes de comenzar.');
+                return;
+            }
+
+            codes = manualInput.split('\n').filter(code => code.trim() !== '').map(code => code.trim());
+            
+            if (codes.length === 0) {
+                alert('No se encontraron códigos válidos.');
+                return;
+            }
+
+            const orderMode = document.getElementById('orderMode').value;
+            if (orderMode === 'random') {
+                codes = shuffleArray([...codes]);
+            }
+
+            currentCodeIndex = 0;
+            results = [];
+
+            document.getElementById('setupPanel').classList.add('hidden');
+            document.getElementById('practicePanel').classList.remove('hidden');
+            document.getElementById('totalCodes').textContent = codes.length;
+
+            showCurrentCode();
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function showCurrentCode() {
+            if (currentCodeIndex >= codes.length) {
+                finishPractice();
+                return;
+            }
+
+            const code = codes[currentCodeIndex];
+            const displayMode = document.getElementById('displayMode').value;
+            const codeDisplay = document.getElementById('codeDisplay');
+            
+            document.getElementById('currentIndex').textContent = currentCodeIndex + 1;
+
+            // Generar cantidad aleatoria
+            const minQty = parseInt(document.getElementById('minQuantity').value);
+            const maxQty = parseInt(document.getElementById('maxQuantity').value);
+            const randomQuantity = Math.floor(Math.random() * (maxQty - minQty + 1)) + minQty;
+            document.getElementById('quantityDisplay').textContent = randomQuantity;
+            
+            // Guardar la cantidad generada temporalmente
+            currentQuantity = randomQuantity;
+
+            const progress = ((currentCodeIndex + 1) / codes.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+
+            if (displayMode === 'barcode') {
+                codeDisplay.innerHTML = '<svg id="barcodeCanvas"></svg>';
+                try {
+                    JsBarcode("#barcodeCanvas", code, {
+                        format: "CODE128",
+                        width: 2,
+                        height: 100,
+                        displayValue: true,
+                        fontSize: 20,
+                        margin: 10
+                    });
+                } catch (error) {
+                    codeDisplay.innerHTML = `<div class="code-number">${code}</div>`;
+                }
+            } else {
+                codeDisplay.innerHTML = `<div class="code-number">${code}</div>`;
+            }
+
+            const practiceMode = document.getElementById('practiceMode').value;
+            if (practiceMode === 'timed') {
+                startTimer();
+            } else {
+                document.getElementById('timerDisplay').textContent = '';
+            }
+        }
+
+        function startTimer() {
+            clearInterval(timer);
+            timeRemaining = parseInt(document.getElementById('timePerCode').value);
+            
+            updateTimerDisplay();
+            
+            timer = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+                
+                if (timeRemaining <= 0) {
+                    clearInterval(timer);
+                    nextCode();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const timerDisplay = document.getElementById('timerDisplay');
+            timerDisplay.textContent = `⏱️ Tiempo restante: ${timeRemaining}s`;
+            
+            if (timeRemaining <= 5) {
+                timerDisplay.style.color = '#dc3545';
+            } else {
+                timerDisplay.style.color = '#667eea';
+            }
+        }
+
+        function nextCode() {
+            clearInterval(timer);
+            
+            results.push({
+                code: codes[currentCodeIndex],
+                quantity: currentQuantity
+            });
+
+            currentCodeIndex++;
+            showCurrentCode();
+        }
+
+        // Atajos de teclado
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !document.getElementById('practicePanel').classList.contains('hidden')) {
+                nextCode();
+            }
+        });
+
+        function finishPractice() {
+            clearInterval(timer);
+            
+            document.getElementById('practicePanel').classList.add('hidden');
+            document.getElementById('resultsPanel').classList.remove('hidden');
+
+            const tableBody = document.getElementById('resultsTableBody');
+            tableBody.innerHTML = '';
+            
+            let total = 0;
+            
+            results.forEach((result, index) => {
+                const row = tableBody.insertRow();
+                row.insertCell(0).textContent = index + 1;
+                row.insertCell(1).textContent = result.code;
+                row.insertCell(2).textContent = result.quantity;
+                total += result.quantity;
+            });
+
+            document.getElementById('totalQuantity').textContent = total.toLocaleString();
+        }
+
+        function cancelPractice() {
+            if (confirm('¿Estás seguro de cancelar la práctica?')) {
+                clearInterval(timer);
+                resetApp();
+            }
+        }
+
+        function resetApp() {
+            clearInterval(timer);
+            codes = [];
+            currentCodeIndex = 0;
+            results = [];
+            
+            document.getElementById('setupPanel').classList.remove('hidden');
+            document.getElementById('practicePanel').classList.add('hidden');
+            document.getElementById('resultsPanel').classList.add('hidden');
+            
+            document.getElementById('progressFill').style.width = '0%';
+        }
+    </script>
+</body>
+</html>
