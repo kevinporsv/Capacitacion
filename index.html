@@ -17,7 +17,8 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 10px;
+            margin: 0;
         }
 
         .container {
@@ -27,22 +28,64 @@
             border-radius: 15px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
             overflow: hidden;
+            height: calc(100vh - 20px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+            }
+            
+            .container {
+                border-radius: 0;
+                height: 100vh;
+            }
         }
 
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 30px;
+            padding: 20px;
             text-align: center;
         }
 
         .header h1 {
-            font-size: 2em;
-            margin-bottom: 10px;
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.5em;
+            }
+            
+            .header p {
+                font-size: 0.85em;
+            }
         }
 
         .setup-panel, .practice-panel {
-            padding: 30px;
+            padding: 15px;
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (max-width: 768px) {
+            .setup-panel, .practice-panel {
+                padding: 10px;
+            }
         }
 
         .hidden {
@@ -108,17 +151,31 @@
             gap: 20px;
         }
 
+        @media (max-width: 768px) {
+            .options-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+        }
+
         .btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 15px 30px;
-            font-size: 16px;
+            padding: 12px 25px;
+            font-size: 15px;
             font-weight: 600;
             border-radius: 8px;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
             width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .btn {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
         }
 
         .btn:hover {
@@ -136,15 +193,34 @@
 
         .practice-display {
             text-align: center;
-            padding: 40px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .practice-display {
+                padding: 5px;
+            }
         }
 
         .progress-bar {
             background: #e0e0e0;
-            height: 8px;
+            height: 6px;
             border-radius: 4px;
-            margin-bottom: 30px;
+            margin-bottom: 10px;
             overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .progress-bar {
+                height: 5px;
+                margin-bottom: 8px;
+            }
         }
 
         .progress-fill {
@@ -153,25 +229,60 @@
             transition: width 0.3s;
         }
 
-        .code-display {
-            margin: 40px 0;
-        }
-
         #barcodeCanvas {
             max-width: 100%;
             height: auto;
         }
 
+        .code-display {
+            margin: 10px 0;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .code-display {
+                margin: 5px 0;
+            }
+        }
+
         .code-number {
-            font-size: 3em;
+            font-size: 2.5em;
             font-weight: bold;
             color: #333;
             font-family: monospace;
             letter-spacing: 4px;
+            word-break: break-all;
+        }
+
+        @media (max-width: 768px) {
+            .code-number {
+                font-size: 1.8em;
+                letter-spacing: 2px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .code-number {
+                font-size: 1.4em;
+                letter-spacing: 1px;
+            }
         }
 
         .quantity-input-section {
-            margin-top: 30px;
+            margin-top: 10px;
+            flex-shrink: 0;
+        }
+
+        .quantity-input-section label {
+            font-size: 1em;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .quantity-input-section label {
+                font-size: 0.95em;
+                margin-bottom: 5px;
+            }
         }
 
         .quantity-input-section input {
@@ -184,32 +295,71 @@
         }
 
         .quantity-display {
-            font-size: 4em;
+            font-size: 3.5em;
             font-weight: bold;
             color: #667eea;
             background: #f0f4ff;
-            padding: 30px;
+            padding: 20px;
             border-radius: 12px;
             border: 3px solid #667eea;
             display: inline-block;
-            min-width: 150px;
+            min-width: 120px;
+        }
+
+        @media (max-width: 768px) {
+            .quantity-display {
+                font-size: 2.8em;
+                padding: 15px;
+                min-width: 100px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .quantity-display {
+                font-size: 2.2em;
+                padding: 12px;
+                min-width: 90px;
+            }
         }
 
         .timer {
-            font-size: 1.5em;
+            font-size: 1.1em;
             color: #667eea;
-            margin-bottom: 20px;
+            margin-bottom: 8px;
             font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .timer {
+                font-size: 1em;
+                margin-bottom: 5px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .timer {
+                font-size: 0.95em;
+            }
         }
 
         .results-panel {
-            padding: 30px;
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        @media (max-width: 768px) {
+            .results-panel {
+                padding: 15px;
+            }
         }
 
         .results-table {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
+            font-size: 0.95em;
         }
 
         .results-table th,
@@ -222,6 +372,17 @@
         .results-table th {
             background: #f5f5f5;
             font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .results-table {
+                font-size: 0.85em;
+            }
+            
+            .results-table th,
+            .results-table td {
+                padding: 8px 5px;
+            }
         }
 
         .total-section {
@@ -241,9 +402,17 @@
         }
 
         .counter {
-            font-size: 1.2em;
+            font-size: 1em;
             color: #666;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .counter {
+                font-size: 0.9em;
+                margin-bottom: 5px;
+            }
         }
     </style>
 </head>
@@ -338,16 +507,16 @@
                 </div>
 
                 <div class="quantity-input-section">
-                    <label style="font-size: 1.2em; margin-bottom: 10px; display: block;">Cantidad a digitar:</label>
+                    <label style="display: block;">Cantidad a digitar:</label>
                     <div class="quantity-display" id="quantityDisplay">0</div>
-                    <div style="margin-top: 20px;">
-                        <button class="btn" onclick="nextCode()" style="width: auto; padding: 12px 40px;">✓ Siguiente</button>
+                    <div style="margin-top: 12px;">
+                        <button class="btn" onclick="nextCode()" style="width: auto; padding: 10px 30px;">✓ Siguiente</button>
                     </div>
                 </div>
             </div>
 
-            <div style="margin-top: 20px;">
-                <button class="btn btn-secondary" onclick="cancelPractice()">❌ Cancelar Práctica</button>
+            <div style="margin-top: 10px; flex-shrink: 0;">
+                <button class="btn btn-secondary" onclick="cancelPractice()">❌ Cancelar</button>
             </div>
         </div>
 
@@ -504,13 +673,19 @@
             if (displayMode === 'barcode') {
                 codeDisplay.innerHTML = '<svg id="barcodeCanvas"></svg>';
                 try {
+                    // Ajustar tamaño del código según pantalla
+                    const isMobile = window.innerWidth <= 768;
+                    const isSmall = window.innerWidth <= 480;
+                    const barcodeHeight = isSmall ? 60 : (isMobile ? 70 : 90);
+                    const barcodeWidth = isSmall ? 1.2 : (isMobile ? 1.5 : 2);
+                    
                     JsBarcode("#barcodeCanvas", code, {
                         format: "CODE128",
-                        width: 2,
-                        height: 100,
+                        width: barcodeWidth,
+                        height: barcodeHeight,
                         displayValue: true,
-                        fontSize: 20,
-                        margin: 10
+                        fontSize: isSmall ? 14 : (isMobile ? 16 : 18),
+                        margin: 5
                     });
                 } catch (error) {
                     codeDisplay.innerHTML = `<div class="code-number">${code}</div>`;
