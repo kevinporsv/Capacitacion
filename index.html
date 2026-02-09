@@ -429,11 +429,26 @@
                 <label>Cargar Códigos:</label>
                 <div style="margin-bottom: 15px;">
                     <div class="file-upload" onclick="document.getElementById('fileInput').click()">
-                        <p>📁 Click para cargar archivo (.txt o .xlsx)</p>
+                        <p>📁 Click para cargar archivo (.txt, .csv o .xlsx)</p>
                         <p class="info-text">O arrastra un archivo aquí</p>
-                        <input type="file" id="fileInput" accept=".txt,.xlsx,.xls">
+                        <input type="file" id="fileInput" accept=".txt,.csv,.xlsx,.xls">
                     </div>
                     <p id="fileName" class="info-text" style="margin-top: 10px;"></p>
+                </div>
+                
+                <div id="excelOptions" class="hidden" style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <label>Columna de códigos de barras:</label>
+                    <select id="columnSelect" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; margin-top: 5px;">
+                        <option value="">Selecciona una columna...</option>
+                    </select>
+                    <p class="info-text" style="margin-top: 5px;">📊 <span id="previewCount">0</span> códigos encontrados</p>
+                </div>
+                
+                <div class="info-text" style="margin-bottom: 15px; padding: 10px; background: #e7f3ff; border-left: 3px solid #667eea; border-radius: 4px;">
+                    <strong>💡 Formatos soportados:</strong><br>
+                    • <strong>TXT simple:</strong> Un código por línea<br>
+                    • <strong>TXT/CSV delimitado:</strong> Columnas separadas por comas o tabulaciones<br>
+                    • <strong>Excel (.xlsx):</strong> Hojas con múltiples columnas
                 </div>
                 
                 <label>O ingresa códigos manualmente (uno por línea):</label>
@@ -441,6 +456,12 @@
             </div>
 
             <div class="options-grid">
+                <div class="form-group">
+                    <label>Cantidad de códigos a usar:</label>
+                    <input type="number" id="codeLimit" value="50" min="1" max="10000">
+                    <p class="info-text">Límite: 1 a 10,000 códigos</p>
+                </div>
+
                 <div class="form-group">
                     <label>Modo de visualización:</label>
                     <select id="displayMode">
@@ -554,6 +575,8 @@
         let results = [];
         let timer = null;
         let timeRemaining = 0;
+        let excelData = null;
+        let allExcelCodes = [];
 
         // Manejo de archivos
         const fileInput = document.getElementById('fileInput');
@@ -591,7 +614,52 @@
             if (file.name.endsWith('.txt')) {
                 reader.onload = (e) => {
                     const content = e.target.result;
-                    document.getElementById('manualInput').value = content;
+                    
+                    // Detectar si es delimitado (coma o tabulación) o simple lista
+                    const lines = content.split('\n').filter(line => line.trim() !== '');
+                    
+                    if (lines.length > 0) {
+                        // Verificar si la primera línea tiene delimitadores
+                        const firstLine = lines[0];
+                        const hasComma = firstLine.includes(',');
+                        const hasTab = firstLine.includes('\t');
+                        
+                        if (hasComma || hasTab) {
+                            // Es un archivo delimitado, procesar como CSV/TSV
+                            const delimiter = hasComma ? ',' : '\t';
+                            const parsedData = lines.map(line => line.split(delimiter).map(cell => cell.trim()));
+                            
+                            excelData = parsedData;
+                            
+                            // Mostrar selector de columnas
+                            const headers = parsedData[0];
+                            const columnSelect = document.getElementById('columnSelect');
+                            columnSelect.innerHTML = '<option value="">Selecciona una columna...</option>';
+                            
+                            headers.forEach((header, index) => {
+                                const option = document.createElement('option');
+                                option.value = index;
+                                option.textContent = header || `Columna ${index + 1}`;
+                                columnSelect.appendChild(option);
+                            });
+                            
+                            document.getElementById('excelOptions').classList.remove('hidden');
+                            
+                            // Remover el event listener anterior si existe
+                            const newColumnSelect = columnSelect.cloneNode(true);
+                            columnSelect.parentNode.replaceChild(newColumnSelect, columnSelect);
+                            newColumnSelect.addEventListener('change', updateExcelPreview);
+                            
+                            // Limpiar el textarea
+                            document.getElementById('manualInput').value = '';
+                        } else {
+                            // Es una lista simple, una por línea
+                            document.getElementById('manualInput').value = content;
+                            document.getElementById('excelOptions').classList.add('hidden');
+                            excelData = null;
+                            allExcelCodes = [];
+                        }
+                    }
                 };
                 reader.readAsText(file);
             } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
@@ -599,33 +667,97 @@
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                    excelData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
                     
-                    const codesList = jsonData.flat().filter(cell => cell && cell.toString().trim() !== '');
-                    document.getElementById('manualInput').value = codesList.join('\n');
+                    // Mostrar opciones de columna
+                    if (excelData.length > 0) {
+                        const headers = excelData[0];
+                        const columnSelect = document.getElementById('columnSelect');
+                        columnSelect.innerHTML = '<option value="">Selecciona una columna...</option>';
+                        
+                        headers.forEach((header, index) => {
+                            const option = document.createElement('option');
+                            option.value = index;
+                            option.textContent = header || `Columna ${index + 1}`;
+                            columnSelect.appendChild(option);
+                        });
+                        
+                        document.getElementById('excelOptions').classList.remove('hidden');
+                        
+                        // Remover el event listener anterior si existe
+                        const newColumnSelect = columnSelect.cloneNode(true);
+                        columnSelect.parentNode.replaceChild(newColumnSelect, columnSelect);
+                        newColumnSelect.addEventListener('change', updateExcelPreview);
+                        
+                        // Limpiar el textarea
+                        document.getElementById('manualInput').value = '';
+                    }
                 };
                 reader.readAsArrayBuffer(file);
             }
         }
 
-        function startPractice() {
-            const manualInput = document.getElementById('manualInput').value.trim();
+        function updateExcelPreview() {
+            const columnIndex = parseInt(document.getElementById('columnSelect').value);
             
-            if (!manualInput) {
-                alert('Por favor, ingresa o carga códigos de barras antes de comenzar.');
+            if (isNaN(columnIndex) || !excelData) {
+                document.getElementById('previewCount').textContent = '0';
+                allExcelCodes = [];
                 return;
             }
-
-            codes = manualInput.split('\n').filter(code => code.trim() !== '').map(code => code.trim());
             
-            if (codes.length === 0) {
+            // Extraer códigos de la columna seleccionada (saltando el header)
+            allExcelCodes = excelData
+                .slice(1)
+                .map(row => row[columnIndex])
+                .filter(cell => cell && cell.toString().trim() !== '')
+                .map(cell => cell.toString().trim());
+            
+            document.getElementById('previewCount').textContent = allExcelCodes.length;
+            
+            // Actualizar el límite máximo si es necesario
+            const limitInput = document.getElementById('codeLimit');
+            if (allExcelCodes.length < parseInt(limitInput.value)) {
+                limitInput.value = allExcelCodes.length;
+            }
+            limitInput.max = allExcelCodes.length;
+        }
+
+        function startPractice() {
+            let inputCodes = [];
+            
+            // Verificar si hay datos de Excel con columna seleccionada
+            if (allExcelCodes.length > 0) {
+                inputCodes = [...allExcelCodes];
+            } else {
+                // Usar input manual
+                const manualInput = document.getElementById('manualInput').value.trim();
+                
+                if (!manualInput) {
+                    alert('Por favor, ingresa o carga códigos de barras antes de comenzar.');
+                    return;
+                }
+                
+                inputCodes = manualInput.split('\n').filter(code => code.trim() !== '').map(code => code.trim());
+            }
+            
+            if (inputCodes.length === 0) {
                 alert('No se encontraron códigos válidos.');
                 return;
             }
 
+            // Aplicar límite de códigos
+            const codeLimit = parseInt(document.getElementById('codeLimit').value);
+            if (codeLimit < inputCodes.length) {
+                inputCodes = inputCodes.slice(0, codeLimit);
+            }
+
+            // Aplicar orden
             const orderMode = document.getElementById('orderMode').value;
             if (orderMode === 'random') {
-                codes = shuffleArray([...codes]);
+                codes = shuffleArray([...inputCodes]);
+            } else {
+                codes = inputCodes;
             }
 
             currentCodeIndex = 0;
@@ -783,12 +915,20 @@
             codes = [];
             currentCodeIndex = 0;
             results = [];
+            excelData = null;
+            allExcelCodes = [];
             
             document.getElementById('setupPanel').classList.remove('hidden');
             document.getElementById('practicePanel').classList.add('hidden');
             document.getElementById('resultsPanel').classList.add('hidden');
+            document.getElementById('excelOptions').classList.add('hidden');
             
             document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('fileName').textContent = '';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('columnSelect').innerHTML = '<option value="">Selecciona una columna...</option>';
+            document.getElementById('previewCount').textContent = '0';
+            document.getElementById('codeLimit').value = '50';
         }
     </script>
 </body>
