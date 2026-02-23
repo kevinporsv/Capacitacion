@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Práctica de Inventario - Códigos de Barra</title>
+    <title>Inventario Pro v2.0 - Sistema Avanzado</title>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
@@ -14,23 +14,35 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
             min-height: 100vh;
             padding: 10px;
             margin: 0;
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             overflow: hidden;
             height: calc(100vh - 20px);
             display: flex;
             flex-direction: column;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @media (max-width: 768px) {
@@ -45,24 +57,50 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
             color: white;
-            padding: 20px;
+            padding: 25px 20px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: moveBackground 20s linear infinite;
+        }
+
+        @keyframes moveBackground {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
         }
 
         .header h1 {
-            font-size: 1.8em;
+            font-size: 1.9em;
             margin-bottom: 5px;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-weight: 700;
         }
 
         .header p {
-            font-size: 0.9em;
+            font-size: 0.95em;
+            position: relative;
+            z-index: 1;
+            opacity: 0.95;
         }
 
         @media (max-width: 768px) {
             .header {
-                padding: 15px;
+                padding: 20px 15px;
             }
             
             .header h1 {
@@ -74,17 +112,32 @@
             }
         }
 
-        .setup-panel, .practice-panel {
-            padding: 15px;
+        .setup-panel {
+            padding: 20px;
             overflow-y: auto;
             flex: 1;
             display: flex;
             flex-direction: column;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .practice-panel {
+            padding: 20px;
+            overflow: hidden;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         @media (max-width: 768px) {
             .setup-panel, .practice-panel {
-                padding: 10px;
+                padding: 12px;
             }
         }
 
@@ -93,14 +146,15 @@
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
 
         .form-group label {
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: #333;
+            color: #1f2937;
+            font-size: 0.95em;
         }
 
         .form-group input[type="text"],
@@ -108,47 +162,63 @@
         .form-group select,
         .form-group textarea {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
+            padding: 12px 14px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.3s;
+            font-family: inherit;
+            background: white;
         }
 
         .form-group input:focus,
         .form-group select:focus,
         .form-group textarea:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+            transform: translateY(-1px);
         }
 
         .form-group textarea {
             resize: vertical;
             min-height: 100px;
-            font-family: monospace;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
         }
 
         .file-upload {
-            border: 2px dashed #667eea;
-            padding: 20px;
-            border-radius: 8px;
+            border: 3px dashed #8b5cf6;
+            padding: 30px 20px;
+            border-radius: 12px;
             text-align: center;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.3s;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(217, 70, 239, 0.05) 100%);
         }
 
         .file-upload:hover {
-            background-color: #f5f5f5;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(217, 70, 239, 0.1) 100%);
+            border-color: #d946ef;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.2);
         }
 
         .file-upload input {
             display: none;
         }
 
+        .file-upload p:first-child {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #8b5cf6;
+            margin-bottom: 5px;
+        }
+
         .options-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 18px;
         }
 
         @media (max-width: 768px) {
@@ -159,41 +229,67 @@
         }
 
         .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
             color: white;
             border: none;
-            padding: 12px 25px;
+            padding: 14px 28px;
             font-size: 15px;
             font-weight: 600;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.3s;
             width: 100%;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+            position: relative;
+            overflow: hidden;
         }
 
-        @media (max-width: 768px) {
-            .btn {
-                padding: 10px 20px;
-                font-size: 14px;
-            }
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
         }
 
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
         }
 
         .btn:active {
             transform: translateY(0);
         }
 
+        @media (max-width: 768px) {
+            .btn {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+        }
+
         .btn-secondary {
-            background: #6c757d;
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            box-shadow: 0 4px 15px rgba(107, 114, 128, 0.3);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 6px 20px rgba(107, 114, 128, 0.4);
         }
 
         .practice-display {
             text-align: center;
-            padding: 10px;
+            padding: 6px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -203,143 +299,198 @@
 
         @media (max-width: 768px) {
             .practice-display {
-                padding: 5px;
+                padding: 4px;
             }
         }
 
         .progress-bar {
-            background: #e0e0e0;
-            height: 6px;
-            border-radius: 4px;
-            margin-bottom: 10px;
+            background: linear-gradient(90deg, #e5e7eb 0%, #f3f4f6 100%);
+            height: 8px;
+            border-radius: 10px;
+            margin-bottom: 12px;
             overflow: hidden;
             flex-shrink: 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
 
         @media (max-width: 768px) {
             .progress-bar {
-                height: 5px;
-                margin-bottom: 8px;
+                height: 6px;
+                margin-bottom: 10px;
             }
         }
 
         .progress-fill {
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
             height: 100%;
-            transition: width 0.3s;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .code-display {
+            margin: 8px 0;
+            flex-shrink: 0;
+            animation: scaleIn 0.4s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .code-display {
+                margin: 6px 0;
+            }
         }
 
         #barcodeCanvas {
             max-width: 100%;
             height: auto;
-        }
-
-        .code-display {
-            margin: 10px 0;
-            flex-shrink: 0;
-        }
-
-        @media (max-width: 768px) {
-            .code-display {
-                margin: 5px 0;
-            }
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));
         }
 
         .code-number {
             font-size: 2.5em;
-            font-weight: bold;
-            color: #333;
-            font-family: monospace;
-            letter-spacing: 4px;
+            font-weight: 700;
+            color: #1f2937;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 5px;
             word-break: break-all;
+            padding: 18px 22px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(217, 70, 239, 0.08) 100%);
+            border: 2px solid rgba(139, 92, 246, 0.3);
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.1);
         }
 
         @media (max-width: 768px) {
             .code-number {
                 font-size: 1.8em;
-                letter-spacing: 2px;
+                letter-spacing: 3px;
+                padding: 15px 18px;
             }
         }
 
         @media (max-width: 480px) {
             .code-number {
                 font-size: 1.4em;
-                letter-spacing: 1px;
+                letter-spacing: 2px;
+                padding: 12px 15px;
             }
         }
 
         .quantity-input-section {
-            margin-top: 10px;
+            margin-top: 6px;
             flex-shrink: 0;
         }
 
         .quantity-input-section label {
-            font-size: 1em;
+            font-size: 0.95em;
             margin-bottom: 8px;
+            color: #4b5563;
+            font-weight: 600;
         }
 
         @media (max-width: 768px) {
             .quantity-input-section label {
-                font-size: 0.95em;
-                margin-bottom: 5px;
+                font-size: 0.9em;
+                margin-bottom: 6px;
             }
-        }
-
-        .quantity-input-section input {
-            width: 200px;
-            padding: 15px;
-            font-size: 24px;
-            text-align: center;
-            border: 3px solid #667eea;
-            border-radius: 8px;
         }
 
         .quantity-display {
             font-size: 3.5em;
-            font-weight: bold;
-            color: #667eea;
-            background: #f0f4ff;
-            padding: 20px;
-            border-radius: 12px;
-            border: 3px solid #667eea;
+            font-weight: 800;
+            color: #8b5cf6;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(217, 70, 239, 0.1) 100%);
+            padding: 20px 35px;
+            border-radius: 15px;
+            border: 3px solid #8b5cf6;
             display: inline-block;
-            min-width: 120px;
+            min-width: 130px;
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.25);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.03);
+            }
         }
 
         @media (max-width: 768px) {
             .quantity-display {
                 font-size: 2.8em;
-                padding: 15px;
-                min-width: 100px;
+                padding: 18px 28px;
+                min-width: 110px;
             }
         }
 
         @media (max-width: 480px) {
             .quantity-display {
                 font-size: 2.2em;
-                padding: 12px;
-                min-width: 90px;
+                padding: 15px 25px;
+                min-width: 95px;
             }
         }
 
         .timer {
-            font-size: 1.1em;
-            color: #667eea;
-            margin-bottom: 8px;
-            font-weight: 600;
+            font-size: 1.2em;
+            color: #764ba2;
+            margin-bottom: 10px;
+            font-weight: 700;
             flex-shrink: 0;
+            text-shadow: 0 2px 5px rgba(118, 75, 162, 0.2);
+            transition: color 0.3s ease;
+        }
+
+        .timer.warning {
+            color: #ef4444 !important;
         }
 
         @media (max-width: 768px) {
             .timer {
-                font-size: 1em;
-                margin-bottom: 5px;
+                font-size: 1.1em;
+                margin-bottom: 8px;
             }
         }
 
         @media (max-width: 480px) {
             .timer {
-                font-size: 0.95em;
+                font-size: 1em;
             }
         }
 
@@ -347,6 +498,7 @@
             padding: 20px;
             overflow-y: auto;
             flex: 1;
+            animation: fadeIn 0.3s ease-in;
         }
 
         @media (max-width: 768px) {
@@ -355,23 +507,52 @@
             }
         }
 
+        .results-panel h2 {
+            color: #1f2937;
+            margin-bottom: 20px;
+            font-size: 1.6em;
+            text-align: center;
+            font-weight: 700;
+        }
+
         .results-table {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
             font-size: 0.95em;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            border-radius: 12px;
+            overflow: hidden;
         }
 
         .results-table th,
         .results-table td {
-            padding: 12px;
+            padding: 14px 12px;
             text-align: left;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid #f3f4f6;
         }
 
         .results-table th {
-            background: #f5f5f5;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+            color: white;
             font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+
+        .results-table tbody tr {
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .results-table tbody tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        .results-table tbody tr:hover {
+            background: rgba(139, 92, 246, 0.08);
+            transform: scale(1.01);
         }
 
         @media (max-width: 768px) {
@@ -381,74 +562,208 @@
             
             .results-table th,
             .results-table td {
-                padding: 8px 5px;
+                padding: 10px 6px;
             }
         }
 
         .total-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
             color: white;
-            padding: 20px;
-            border-radius: 8px;
+            padding: 25px;
+            border-radius: 15px;
             text-align: center;
             font-size: 1.5em;
             margin-top: 20px;
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .total-section div:first-child {
+            font-weight: 600;
+            opacity: 0.95;
+        }
+
+        .total-section div:last-child {
+            font-weight: 800;
         }
 
         .info-text {
-            color: #666;
+            color: #6b7280;
             font-size: 0.9em;
             margin-top: 5px;
         }
 
         .counter {
             font-size: 1em;
-            color: #666;
-            margin-bottom: 8px;
+            color: #6b7280;
+            margin-bottom: 10px;
             flex-shrink: 0;
+            font-weight: 600;
         }
 
         @media (max-width: 768px) {
             .counter {
                 font-size: 0.9em;
-                margin-bottom: 5px;
+                margin-bottom: 8px;
             }
+        }
+
+        .info-box {
+            margin-bottom: 18px;
+            padding: 16px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(217, 70, 239, 0.08) 100%);
+            border-left: 4px solid #8b5cf6;
+            border-radius: 10px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .info-box strong {
+            color: #8b5cf6;
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.05em;
+        }
+
+        .info-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .info-box li {
+            padding: 6px 0;
+            padding-left: 24px;
+            position: relative;
+            color: #4b5563;
+            font-size: 0.95em;
+        }
+
+        .info-box li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: #8b5cf6;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .excel-options {
+            margin-bottom: 18px;
+            padding: 20px;
+            background: white;
+            border: 2px solid #8b5cf6;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.1);
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Scrollbar personalizado */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #7c3aed 0%, #c026d3 100%);
+        }
+
+        /* Mejora visual adicional */
+        .stat-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(217, 70, 239, 0.1) 100%);
+            color: #8b5cf6;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin: 5px;
+            border: 1px solid rgba(139, 92, 246, 0.3);
         }
     </style>
 </head>
 <body>
+    <!-- Partículas de fondo animadas -->
+    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;" id="particles"></div>
+
     <div class="container">
         <div class="header">
-            <h1>📦 Práctica de Inventario</h1>
-            <p>Sistema de entrenamiento para escaneo y digitación</p>
+            <div style="position: absolute; top: 15px; right: 20px; background: rgba(255,255,255,0.2); padding: 5px 14px; border-radius: 20px; font-size: 0.75em; font-weight: 700; backdrop-filter: blur(10px); z-index: 2;">v2.0 Pro</div>
+            <h1>📦 Inventario Pro</h1>
+            <p>Sistema Avanzado de Entrenamiento para Inventarios</p>
         </div>
 
         <!-- Panel de Configuración -->
         <div id="setupPanel" class="setup-panel">
             <div class="form-group">
-                <label>Cargar Códigos:</label>
+                <label>📁 Cargar Códigos:</label>
                 <div style="margin-bottom: 15px;">
                     <div class="file-upload" onclick="document.getElementById('fileInput').click()">
-                        <p>📁 Click para cargar archivo (.txt, .csv o .xlsx)</p>
+                        <p>📂 Click para cargar archivo (.txt, .csv o .xlsx)</p>
                         <p class="info-text">O arrastra un archivo aquí</p>
                         <input type="file" id="fileInput" accept=".txt,.csv,.xlsx,.xls">
                     </div>
-                    <p id="fileName" class="info-text" style="margin-top: 10px;"></p>
+                    <p id="fileName" class="info-text" style="margin-top: 10px; font-weight: 600;"></p>
                 </div>
                 
-                <div id="excelOptions" class="hidden" style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                <div id="excelOptions" class="hidden excel-options">
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: flex; align-items: center; cursor: pointer; font-size: 0.95em;">
+                            <input type="checkbox" id="hasHeaderCheckbox" checked style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
+                            <span>La primera fila contiene encabezados/títulos</span>
+                        </label>
+                        <p class="info-text" style="margin-top: 5px; margin-left: 26px;">Desactiva si tu archivo NO tiene fila de títulos</p>
+                    </div>
+                    
                     <label>Columna de códigos de barras:</label>
-                    <select id="columnSelect" style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; margin-top: 5px;">
+                    <select id="columnSelect" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 10px; margin-top: 8px; font-size: 15px;">
                         <option value="">Selecciona una columna...</option>
                     </select>
-                    <p class="info-text" style="margin-top: 5px;">📊 <span id="previewCount">0</span> códigos encontrados</p>
+                    
+                    <div id="previewSection" class="hidden" style="margin-top: 15px; padding: 15px; background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb;">
+                        <strong style="display: block; margin-bottom: 10px; color: #6b7280; font-size: 0.9em;">📋 Vista previa (primeros 5 elementos):</strong>
+                        <div id="previewList" style="font-family: 'Courier New', monospace; font-size: 0.85em; color: #374151; line-height: 1.8;"></div>
+                    </div>
+                    
+                    <p class="info-text" style="margin-top: 8px;">📊 <span id="previewCount" style="font-weight: 700; color: #8b5cf6;">0</span> códigos encontrados en total</p>
                 </div>
                 
-                <div class="info-text" style="margin-bottom: 15px; padding: 10px; background: #e7f3ff; border-left: 3px solid #667eea; border-radius: 4px;">
-                    <strong>💡 Formatos soportados:</strong><br>
-                    • <strong>TXT simple:</strong> Un código por línea<br>
-                    • <strong>TXT/CSV delimitado:</strong> Columnas separadas por comas o tabulaciones<br>
-                    • <strong>Excel (.xlsx):</strong> Hojas con múltiples columnas
+                <div class="info-box">
+                    <strong>💡 Formatos soportados:</strong>
+                    <ul>
+                        <li><strong>TXT simple:</strong> Un código por línea</li>
+                        <li><strong>TXT/CSV delimitado:</strong> Columnas separadas por comas o tabulaciones</li>
+                        <li><strong>Excel (.xlsx):</strong> Hojas con múltiples columnas</li>
+                    </ul>
                 </div>
                 
                 <label>O ingresa códigos manualmente (uno por línea):</label>
@@ -457,13 +772,13 @@
 
             <div class="options-grid">
                 <div class="form-group">
-                    <label>Cantidad de códigos a usar:</label>
+                    <label>🔢 Cantidad de códigos a usar:</label>
                     <input type="number" id="codeLimit" value="50" min="1" max="10000">
                     <p class="info-text">Límite: 1 a 10,000 códigos</p>
                 </div>
 
                 <div class="form-group">
-                    <label>Modo de visualización:</label>
+                    <label>📱 Modo de visualización:</label>
                     <select id="displayMode">
                         <option value="barcode">Código de Barras</option>
                         <option value="number">Código Numérico</option>
@@ -471,7 +786,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Orden de presentación:</label>
+                    <label>🔀 Orden de presentación:</label>
                     <select id="orderMode">
                         <option value="sequential">Secuencial</option>
                         <option value="random">Aleatorio</option>
@@ -479,12 +794,12 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Tiempo por código (segundos):</label>
+                    <label>⏱️ Tiempo por código (segundos):</label>
                     <input type="number" id="timePerCode" value="10" min="5" max="60">
                 </div>
 
                 <div class="form-group">
-                    <label>Modo de práctica:</label>
+                    <label>🎯 Modo de práctica:</label>
                     <select id="practiceMode">
                         <option value="timed">Con tiempo límite</option>
                         <option value="manual">Avance manual</option>
@@ -492,20 +807,19 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Cantidad mínima:</label>
+                    <label>📊 Cantidad mínima:</label>
                     <input type="number" id="minQuantity" value="1" min="1" max="9999">
                 </div>
 
                 <div class="form-group">
-                    <label>Cantidad máxima:</label>
+                    <label>📈 Cantidad máxima:</label>
                     <input type="number" id="maxQuantity" value="100" min="1" max="9999">
                 </div>
             </div>
+            
+            <div class="options-grid" style="grid-template-columns: 1fr;"></div>
 
-            <div class="options-grid" style="grid-template-columns: 1fr;">
-            </div>
-
-            <div style="margin-top: 30px;">
+            <div style="margin-top: 20px;">
                 <button class="btn" onclick="startPractice()">🚀 Comenzar Práctica</button>
             </div>
         </div>
@@ -515,9 +829,12 @@
             <div class="progress-bar">
                 <div id="progressFill" class="progress-fill" style="width: 0%"></div>
             </div>
+            <div style="font-size: 0.85em; color: #6b7280; font-weight: 600; text-align: center; margin-top: 5px;">
+                <span id="progressPercentage">0%</span> completado
+            </div>
 
             <div class="counter">
-                <span>Código <span id="currentIndex">1</span> de <span id="totalCodes">0</span></span>
+                <span>Código <span id="currentIndex" class="stat-badge">1</span> de <span id="totalCodes" class="stat-badge">0</span></span>
             </div>
 
             <div id="timerDisplay" class="timer"></div>
@@ -531,19 +848,19 @@
                     <label style="display: block;">Cantidad a digitar:</label>
                     <div class="quantity-display" id="quantityDisplay">0</div>
                     <div style="margin-top: 12px;">
-                        <button class="btn" onclick="nextCode()" style="width: auto; padding: 10px 30px;">✓ Siguiente</button>
+                        <button class="btn" onclick="nextCode()" style="width: auto; padding: 10px 28px;">✓ Siguiente <span style="opacity: 0.7; font-size: 0.85em;">(Enter)</span></button>
                     </div>
                 </div>
             </div>
 
-            <div style="margin-top: 10px; flex-shrink: 0;">
+            <div style="margin-top: 8px; flex-shrink: 0;">
                 <button class="btn btn-secondary" onclick="cancelPractice()">❌ Cancelar</button>
             </div>
         </div>
 
         <!-- Panel de Resultados -->
         <div id="resultsPanel" class="results-panel hidden">
-            <h2 style="margin-bottom: 20px;">📊 Resultados de la Práctica</h2>
+            <h2>📊 Resultados de la Práctica</h2>
             
             <table class="results-table">
                 <thead>
@@ -559,11 +876,14 @@
 
             <div class="total-section">
                 <div>Total General:</div>
-                <div style="font-size: 1.5em; font-weight: bold; margin-top: 10px;" id="totalQuantity">0</div>
+                <div style="font-size: 1.5em; margin-top: 10px;" id="totalQuantity">0</div>
             </div>
 
-            <div style="margin-top: 30px;">
-                <button class="btn" onclick="resetApp()">🔄 Nueva Práctica</button>
+            <div style="margin-top: 25px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <button class="btn" onclick="exportToExcel()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">📊 Exportar a Excel</button>
+                    <button class="btn" onclick="resetApp()">🔄 Nueva Práctica</button>
+                </div>
             </div>
         </div>
     </div>
@@ -586,7 +906,7 @@
         const fileUpload = document.querySelector('.file-upload');
         fileUpload.addEventListener('dragover', (e) => {
             e.preventDefault();
-            fileUpload.style.backgroundColor = '#f0f0f0';
+            fileUpload.style.backgroundColor = 'rgba(139, 92, 246, 0.15)';
         });
 
         fileUpload.addEventListener('dragleave', () => {
@@ -607,7 +927,7 @@
             const file = event.target.files[0];
             if (!file) return;
 
-            document.getElementById('fileName').textContent = `Archivo cargado: ${file.name}`;
+            document.getElementById('fileName').textContent = `✅ Archivo cargado: ${file.name}`;
 
             const reader = new FileReader();
             
@@ -631,24 +951,30 @@
                             
                             excelData = parsedData;
                             
-                            // Mostrar selector de columnas
-                            const headers = parsedData[0];
-                            const columnSelect = document.getElementById('columnSelect');
-                            columnSelect.innerHTML = '<option value="">Selecciona una columna...</option>';
+                            // Detectar si la primera fila es header
+                            const hasHeader = detectHeader(parsedData[0]);
                             
-                            headers.forEach((header, index) => {
-                                const option = document.createElement('option');
-                                option.value = index;
-                                option.textContent = header || `Columna ${index + 1}`;
-                                columnSelect.appendChild(option);
-                            });
+                            // Configurar checkbox
+                            const headerCheckbox = document.getElementById('hasHeaderCheckbox');
+                            headerCheckbox.checked = hasHeader;
+                            
+                            // Actualizar selector de columnas
+                            updateColumnSelector();
                             
                             document.getElementById('excelOptions').classList.remove('hidden');
                             
-                            // Remover el event listener anterior si existe
+                            // Agregar listeners
+                            const columnSelect = document.getElementById('columnSelect');
                             const newColumnSelect = columnSelect.cloneNode(true);
                             columnSelect.parentNode.replaceChild(newColumnSelect, columnSelect);
                             newColumnSelect.addEventListener('change', updateExcelPreview);
+                            
+                            const newCheckbox = headerCheckbox.cloneNode(true);
+                            headerCheckbox.parentNode.replaceChild(newCheckbox, headerCheckbox);
+                            newCheckbox.addEventListener('change', () => {
+                                updateColumnSelector();
+                                updateExcelPreview();
+                            });
                             
                             // Limpiar el textarea
                             document.getElementById('manualInput').value = '';
@@ -671,23 +997,29 @@
                     
                     // Mostrar opciones de columna
                     if (excelData.length > 0) {
-                        const headers = excelData[0];
-                        const columnSelect = document.getElementById('columnSelect');
-                        columnSelect.innerHTML = '<option value="">Selecciona una columna...</option>';
+                        const hasHeader = detectHeader(excelData[0]);
                         
-                        headers.forEach((header, index) => {
-                            const option = document.createElement('option');
-                            option.value = index;
-                            option.textContent = header || `Columna ${index + 1}`;
-                            columnSelect.appendChild(option);
-                        });
+                        // Configurar checkbox
+                        const headerCheckbox = document.getElementById('hasHeaderCheckbox');
+                        headerCheckbox.checked = hasHeader;
+                        
+                        // Actualizar selector de columnas
+                        updateColumnSelector();
                         
                         document.getElementById('excelOptions').classList.remove('hidden');
                         
-                        // Remover el event listener anterior si existe
+                        // Agregar listeners
+                        const columnSelect = document.getElementById('columnSelect');
                         const newColumnSelect = columnSelect.cloneNode(true);
                         columnSelect.parentNode.replaceChild(newColumnSelect, columnSelect);
                         newColumnSelect.addEventListener('change', updateExcelPreview);
+                        
+                        const newCheckbox = headerCheckbox.cloneNode(true);
+                        headerCheckbox.parentNode.replaceChild(newCheckbox, headerCheckbox);
+                        newCheckbox.addEventListener('change', () => {
+                            updateColumnSelector();
+                            updateExcelPreview();
+                        });
                         
                         // Limpiar el textarea
                         document.getElementById('manualInput').value = '';
@@ -697,23 +1029,102 @@
             }
         }
 
+        function updateColumnSelector() {
+            if (!excelData || excelData.length === 0) return;
+            
+            const hasHeader = document.getElementById('hasHeaderCheckbox').checked;
+            const columnSelect = document.getElementById('columnSelect');
+            columnSelect.innerHTML = '<option value="">Selecciona una columna...</option>';
+            
+            const firstRow = excelData[0];
+            const numColumns = firstRow.length;
+            
+            for (let i = 0; i < numColumns; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                
+                if (hasHeader) {
+                    // Mostrar el nombre del header
+                    option.textContent = firstRow[i] || `Columna ${i + 1}`;
+                } else {
+                    // Mostrar número de columna y una muestra del primer dato
+                    const sampleData = firstRow[i] ? ` (ej: ${firstRow[i]})` : '';
+                    option.textContent = `Columna ${i + 1}${sampleData}`;
+                }
+                
+                columnSelect.appendChild(option);
+            }
+        }
+
+        function detectHeader(row) {
+            // Detectar si la primera fila es header
+            // Si más del 50% de las celdas son texto no numérico, es probable que sea header
+            if (!row || row.length === 0) return false;
+            
+            let nonNumericCount = 0;
+            let validCells = 0;
+            
+            row.forEach(cell => {
+                if (cell && cell.toString().trim() !== '') {
+                    validCells++;
+                    const cellStr = cell.toString().trim();
+                    // Si no es un número puro o si tiene letras, cuenta como texto
+                    if (isNaN(cellStr) || /[a-zA-Z]/.test(cellStr)) {
+                        nonNumericCount++;
+                    }
+                }
+            });
+            
+            // Si más del 50% son no numéricos, probablemente es header
+            return validCells > 0 && (nonNumericCount / validCells) > 0.5;
+        }
+
         function updateExcelPreview() {
             const columnIndex = parseInt(document.getElementById('columnSelect').value);
             
             if (isNaN(columnIndex) || !excelData) {
                 document.getElementById('previewCount').textContent = '0';
+                document.getElementById('previewSection').classList.add('hidden');
                 allExcelCodes = [];
                 return;
             }
             
-            // Extraer códigos de la columna seleccionada (saltando el header)
+            // Usar el checkbox para determinar si hay header
+            const hasHeader = document.getElementById('hasHeaderCheckbox').checked;
+            
+            // Extraer códigos de la columna seleccionada
+            // Si tiene header, saltar la primera fila; si no, incluir todas
+            const startRow = hasHeader ? 1 : 0;
+            
             allExcelCodes = excelData
-                .slice(1)
+                .slice(startRow)
                 .map(row => row[columnIndex])
                 .filter(cell => cell && cell.toString().trim() !== '')
                 .map(cell => cell.toString().trim());
             
             document.getElementById('previewCount').textContent = allExcelCodes.length;
+            
+            // Mostrar vista previa de los primeros 5 elementos
+            if (allExcelCodes.length > 0) {
+                const previewList = document.getElementById('previewList');
+                const previewItems = allExcelCodes.slice(0, 5);
+                const previewHTML = previewItems.map((code, idx) => 
+                    `<div style="padding: 5px 0; border-bottom: 1px solid #e5e7eb;">
+                        <span style="color: #9ca3af; margin-right: 10px;">${idx + 1}.</span>
+                        <span style="color: #1f2937; font-weight: 600;">${code}</span>
+                    </div>`
+                ).join('');
+                
+                previewList.innerHTML = previewHTML;
+                
+                if (allExcelCodes.length > 5) {
+                    previewList.innerHTML += `<div style="padding: 8px 0; color: #6b7280; font-style: italic;">... y ${allExcelCodes.length - 5} más</div>`;
+                }
+                
+                document.getElementById('previewSection').classList.remove('hidden');
+            } else {
+                document.getElementById('previewSection').classList.add('hidden');
+            }
             
             // Actualizar el límite máximo si es necesario
             const limitInput = document.getElementById('codeLimit');
@@ -801,6 +1212,7 @@
 
             const progress = ((currentCodeIndex + 1) / codes.length) * 100;
             document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('progressPercentage').textContent = Math.round(progress) + '%';
 
             if (displayMode === 'barcode') {
                 codeDisplay.innerHTML = '<svg id="barcodeCanvas"></svg>';
@@ -856,9 +1268,9 @@
             timerDisplay.textContent = `⏱️ Tiempo restante: ${timeRemaining}s`;
             
             if (timeRemaining <= 5) {
-                timerDisplay.style.color = '#dc3545';
+                timerDisplay.style.color = '#dc2626';
             } else {
-                timerDisplay.style.color = '#667eea';
+                timerDisplay.style.color = '#8b5cf6';
             }
         }
 
@@ -929,6 +1341,195 @@
             document.getElementById('columnSelect').innerHTML = '<option value="">Selecciona una columna...</option>';
             document.getElementById('previewCount').textContent = '0';
             document.getElementById('codeLimit').value = '50';
+        }
+
+        // Crear partículas de fondo animadas
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            if (!particlesContainer) return;
+            
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.style.position = 'absolute';
+                particle.style.width = Math.random() * 15 + 5 + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.borderRadius = '50%';
+                particle.style.background = 'rgba(255, 255, 255, 0.15)';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.bottom = '-20px';
+                particle.style.animation = `float ${Math.random() * 10 + 15}s linear infinite`;
+                particle.style.animationDelay = Math.random() * 5 + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // Agregar estilos de animación de partículas
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes float {
+                0% {
+                    transform: translateY(0) translateX(0) rotate(0deg);
+                    opacity: 0;
+                }
+                10% {
+                    opacity: 1;
+                }
+                90% {
+                    opacity: 1;
+                }
+                100% {
+                    transform: translateY(-100vh) translateX(${Math.random() * 200 - 100}px) rotate(360deg);
+                    opacity: 0;
+                }
+            }
+
+            .timer.warning {
+                color: #ef4444 !important;
+                animation: timerWarning 0.5s ease-in-out infinite;
+            }
+
+            @keyframes timerWarning {
+                0%, 100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.7;
+                }
+            }
+
+            .container {
+                position: relative;
+                z-index: 1;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Inicializar partículas al cargar
+        window.addEventListener('load', createParticles);
+
+        // Mejorar el timer para que cambie de color cuando queda poco tiempo
+        function updateTimerDisplay() {
+            const timerDisplay = document.getElementById('timerDisplay');
+            timerDisplay.textContent = `⏱️ Tiempo restante: ${timeRemaining}s`;
+            
+            if (timeRemaining <= 5) {
+                timerDisplay.classList.add('warning');
+            } else {
+                timerDisplay.classList.remove('warning');
+            }
+        }
+
+        // Agregar sonido de éxito al completar (visual)
+        function showSuccessAnimation() {
+            // Crear confeti visual
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.style.position = 'fixed';
+                    confetti.style.width = '10px';
+                    confetti.style.height = '10px';
+                    confetti.style.background = ['#667eea', '#764ba2', '#d946ef', '#10b981', '#f59e0b'][Math.floor(Math.random() * 5)];
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.top = '0';
+                    confetti.style.opacity = '1';
+                    confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                    confetti.style.pointerEvents = 'none';
+                    confetti.style.zIndex = '9999';
+                    document.body.appendChild(confetti);
+                    
+                    const animation = confetti.animate([
+                        { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+                        { transform: `translateY(100vh) rotate(${Math.random() * 720}deg)`, opacity: 0 }
+                    ], {
+                        duration: 2000 + Math.random() * 1000,
+                        easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                    });
+                    
+                    animation.onfinish = () => confetti.remove();
+                }, i * 50);
+            }
+        }
+
+        // Modificar finishPractice para agregar estadísticas y confeti
+        const originalFinishPractice = finishPractice;
+        finishPractice = function() {
+            clearInterval(timer);
+            
+            showSuccessAnimation();
+            
+            document.getElementById('practicePanel').classList.add('hidden');
+            document.getElementById('resultsPanel').classList.remove('hidden');
+
+            const tableBody = document.getElementById('resultsTableBody');
+            tableBody.innerHTML = '';
+            
+            let total = 0;
+            
+            results.forEach((result, index) => {
+                const row = tableBody.insertRow();
+                row.insertCell(0).textContent = index + 1;
+                row.insertCell(1).textContent = result.code;
+                row.insertCell(2).textContent = result.quantity;
+                total += result.quantity;
+            });
+
+            document.getElementById('totalQuantity').textContent = total.toLocaleString();
+            
+            // Agregar estadísticas adicionales
+            const resultsHeader = document.querySelector('.results-panel h2');
+            if (resultsHeader && !document.getElementById('resultsStats')) {
+                const statsDiv = document.createElement('div');
+                statsDiv.id = 'resultsStats';
+                statsDiv.style.cssText = 'display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 15px;';
+                
+                const avgQuantity = (total / results.length).toFixed(1);
+                const maxQuantity = Math.max(...results.map(r => r.quantity));
+                const minQuantity = Math.min(...results.map(r => r.quantity));
+                
+                statsDiv.innerHTML = `
+                    <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%); padding: 12px 20px; border-radius: 12px; border: 2px solid rgba(16, 185, 129, 0.3);">
+                        <div style="font-size: 0.8em; color: #6b7280; font-weight: 600; text-transform: uppercase;">Promedio</div>
+                        <div style="font-size: 1.6em; color: #10b981; font-weight: 800; margin-top: 4px;">${avgQuantity}</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%); padding: 12px 20px; border-radius: 12px; border: 2px solid rgba(239, 68, 68, 0.3);">
+                        <div style="font-size: 0.8em; color: #6b7280; font-weight: 600; text-transform: uppercase;">Máximo</div>
+                        <div style="font-size: 1.6em; color: #ef4444; font-weight: 800; margin-top: 4px;">${maxQuantity}</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%); padding: 12px 20px; border-radius: 12px; border: 2px solid rgba(59, 130, 246, 0.3);">
+                        <div style="font-size: 0.8em; color: #6b7280; font-weight: 600; text-transform: uppercase;">Mínimo</div>
+                        <div style="font-size: 1.6em; color: #3b82f6; font-weight: 800; margin-top: 4px;">${minQuantity}</div>
+                    </div>
+                `;
+                
+                resultsHeader.parentNode.insertBefore(statsDiv, resultsHeader.nextSibling);
+            }
+        };
+
+        // Función para exportar resultados a Excel
+        function exportToExcel() {
+            if (results.length === 0) {
+                alert('No hay resultados para exportar');
+                return;
+            }
+
+            const ws_data = [
+                ['#', 'Código de Barras', 'Cantidad']
+            ];
+
+            results.forEach((result, index) => {
+                ws_data.push([index + 1, result.code, result.quantity]);
+            });
+
+            // Agregar total
+            const total = results.reduce((sum, r) => sum + r.quantity, 0);
+            ws_data.push(['', 'TOTAL', total]);
+
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Resultados");
+
+            const fileName = `inventario_resultados_${new Date().toISOString().slice(0,10)}.xlsx`;
+            XLSX.writeFile(wb, fileName);
         }
     </script>
 </body>
