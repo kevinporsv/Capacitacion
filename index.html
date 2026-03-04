@@ -354,6 +354,10 @@
             margin: 8px 0;
             flex-shrink: 0;
             animation: scaleIn 0.4s ease-out;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         @keyframes scaleIn {
@@ -708,6 +712,13 @@
             font-weight: 600;
             margin: 5px;
             border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        /* Grid responsive para múltiples códigos */
+        @media (max-width: 768px) {
+            .code-display > div > div {
+                grid-template-columns: 1fr !important;
+            }
         }
     </style>
 </head>
@@ -1292,21 +1303,74 @@
             const isMultiColumn = Array.isArray(currentCodes);
             
             if (isMultiColumn) {
-                // Mostrar múltiples códigos con sus nombres de columna
-                let html = '<div style="display: flex; flex-direction: column; gap: 12px; align-items: center;">';
+                // Mostrar múltiples códigos en grid horizontal
+                const numCodes = currentCodes.length;
+                const gridCols = numCodes === 1 ? '1fr' : numCodes === 2 ? '1fr 1fr' : '1fr 1fr 1fr';
+                
+                let html = `<div style="display: grid; grid-template-columns: ${gridCols}; gap: 20px; width: 100%; max-width: 900px; margin: 0 auto;">`;
                 
                 currentCodes.forEach((item, index) => {
-                    const columnLabel = `<div style="font-size: 0.9em; color: #8b5cf6; font-weight: 700; margin-bottom: 6px; text-align: center;">${item.columnName}</div>`;
-                    
                     if (displayMode === 'barcode') {
-                        html += `<div style="margin-bottom: ${index < currentCodes.length - 1 ? '8px' : '0'};">
-                            ${columnLabel}
-                            <svg id="barcodeCanvas${index}"></svg>
+                        html += `
+                        <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(217, 70, 239, 0.05) 100%); 
+                                    padding: 16px; 
+                                    border-radius: 12px; 
+                                    border: 2px solid rgba(139, 92, 246, 0.2);
+                                    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
+                                    display: flex;
+                                    flex-direction: column;
+                                    align-items: center;
+                                    justify-content: center;
+                                    min-height: 160px;">
+                            <div style="font-size: 0.85em; 
+                                        color: #8b5cf6; 
+                                        font-weight: 700; 
+                                        margin-bottom: 10px; 
+                                        text-transform: uppercase;
+                                        letter-spacing: 0.5px;
+                                        text-align: center;
+                                        padding: 6px 12px;
+                                        background: rgba(139, 92, 246, 0.1);
+                                        border-radius: 6px;">
+                                ${item.columnName}
+                            </div>
+                            <div style="flex: 1; display: flex; align-items: center; justify-content: center; width: 100%;">
+                                <svg id="barcodeCanvas${index}" style="max-width: 100%;"></svg>
+                            </div>
                         </div>`;
                     } else {
-                        html += `<div style="margin-bottom: ${index < currentCodes.length - 1 ? '8px' : '0'};">
-                            ${columnLabel}
-                            <div class="code-number">${item.code}</div>
+                        html += `
+                        <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(217, 70, 239, 0.05) 100%); 
+                                    padding: 16px; 
+                                    border-radius: 12px; 
+                                    border: 2px solid rgba(139, 92, 246, 0.2);
+                                    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
+                                    display: flex;
+                                    flex-direction: column;
+                                    align-items: center;
+                                    justify-content: center;
+                                    min-height: 160px;">
+                            <div style="font-size: 0.85em; 
+                                        color: #8b5cf6; 
+                                        font-weight: 700; 
+                                        margin-bottom: 10px; 
+                                        text-transform: uppercase;
+                                        letter-spacing: 0.5px;
+                                        text-align: center;
+                                        padding: 6px 12px;
+                                        background: rgba(139, 92, 246, 0.1);
+                                        border-radius: 6px;">
+                                ${item.columnName}
+                            </div>
+                            <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+                                <div class="code-number" style="font-size: ${numCodes === 1 ? '2.5em' : numCodes === 2 ? '1.8em' : '1.4em'}; 
+                                                                padding: 12px 18px; 
+                                                                margin: 0;
+                                                                word-break: break-word;
+                                                                max-width: 100%;">
+                                    ${item.code}
+                                </div>
+                            </div>
                         </div>`;
                     }
                 });
@@ -1320,19 +1384,37 @@
                         try {
                             const isMobile = window.innerWidth <= 768;
                             const isSmall = window.innerWidth <= 480;
-                            const barcodeHeight = isSmall ? 60 : (isMobile ? 70 : 90);
-                            const barcodeWidth = isSmall ? 1.2 : (isMobile ? 1.5 : 2);
+                            
+                            // Ajustar tamaño según cantidad de códigos y pantalla
+                            let barcodeWidth, barcodeHeight, fontSize;
+                            
+                            if (numCodes === 1) {
+                                barcodeWidth = isSmall ? 1.2 : (isMobile ? 1.5 : 2);
+                                barcodeHeight = isSmall ? 60 : (isMobile ? 70 : 90);
+                                fontSize = isSmall ? 14 : (isMobile ? 16 : 18);
+                            } else if (numCodes === 2) {
+                                barcodeWidth = isSmall ? 1 : (isMobile ? 1.2 : 1.5);
+                                barcodeHeight = isSmall ? 50 : (isMobile ? 60 : 75);
+                                fontSize = isSmall ? 12 : (isMobile ? 14 : 16);
+                            } else {
+                                barcodeWidth = isSmall ? 0.8 : (isMobile ? 1 : 1.2);
+                                barcodeHeight = isSmall ? 45 : (isMobile ? 50 : 65);
+                                fontSize = isSmall ? 10 : (isMobile ? 12 : 14);
+                            }
                             
                             JsBarcode(`#barcodeCanvas${index}`, item.code, {
                                 format: "CODE128",
                                 width: barcodeWidth,
                                 height: barcodeHeight,
                                 displayValue: true,
-                                fontSize: isSmall ? 14 : (isMobile ? 16 : 18),
+                                fontSize: fontSize,
                                 margin: 5
                             });
                         } catch (error) {
-                            document.getElementById(`barcodeCanvas${index}`).outerHTML = `<div class="code-number">${item.code}</div>`;
+                            const canvas = document.getElementById(`barcodeCanvas${index}`);
+                            if (canvas) {
+                                canvas.outerHTML = `<div class="code-number" style="font-size: 1.2em; padding: 8px; margin: 0;">${item.code}</div>`;
+                            }
                         }
                     });
                 }
