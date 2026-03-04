@@ -744,13 +744,35 @@
                         <p class="info-text" style="margin-top: 5px; margin-left: 26px;">Desactiva si tu archivo NO tiene fila de títulos</p>
                     </div>
                     
-                    <label>Columna de códigos de barras:</label>
-                    <select id="columnSelect" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 10px; margin-top: 8px; font-size: 15px;">
-                        <option value="">Selecciona una columna...</option>
-                    </select>
+                    <div style="margin-bottom: 20px;">
+                        <label style="font-weight: 700; color: #764ba2; margin-bottom: 12px; display: block;">📊 Selecciona las columnas de códigos (máximo 3):</label>
+                        
+                        <div style="display: grid; gap: 15px;">
+                            <div>
+                                <label style="font-size: 0.9em; color: #6b7280; margin-bottom: 5px; display: block;">Columna 1:</label>
+                                <select id="columnSelect1" class="column-selector" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 15px;">
+                                    <option value="">No seleccionada</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label style="font-size: 0.9em; color: #6b7280; margin-bottom: 5px; display: block;">Columna 2 (opcional):</label>
+                                <select id="columnSelect2" class="column-selector" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 15px;">
+                                    <option value="">No seleccionada</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label style="font-size: 0.9em; color: #6b7280; margin-bottom: 5px; display: block;">Columna 3 (opcional):</label>
+                                <select id="columnSelect3" class="column-selector" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 15px;">
+                                    <option value="">No seleccionada</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                     
                     <div id="previewSection" class="hidden" style="margin-top: 15px; padding: 15px; background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb;">
-                        <strong style="display: block; margin-bottom: 10px; color: #6b7280; font-size: 0.9em;">📋 Vista previa (primeros 5 elementos):</strong>
+                        <strong style="display: block; margin-bottom: 10px; color: #6b7280; font-size: 0.9em;">📋 Vista previa (primeros 3 registros):</strong>
                         <div id="previewList" style="font-family: 'Courier New', monospace; font-size: 0.85em; color: #374151; line-height: 1.8;"></div>
                     </div>
                     
@@ -897,6 +919,8 @@
         let timeRemaining = 0;
         let excelData = null;
         let allExcelCodes = [];
+        let selectedColumns = []; // Array de objetos {index, name}
+        let columnNames = []; // Nombres de las columnas seleccionadas
 
         // Manejo de archivos
         const fileInput = document.getElementById('fileInput');
@@ -963,11 +987,13 @@
                             
                             document.getElementById('excelOptions').classList.remove('hidden');
                             
-                            // Agregar listeners
-                            const columnSelect = document.getElementById('columnSelect');
-                            const newColumnSelect = columnSelect.cloneNode(true);
-                            columnSelect.parentNode.replaceChild(newColumnSelect, columnSelect);
-                            newColumnSelect.addEventListener('change', updateExcelPreview);
+                            // Agregar listeners a los 3 selectores
+                            for (let i = 1; i <= 3; i++) {
+                                const columnSelect = document.getElementById(`columnSelect${i}`);
+                                const newColumnSelect = columnSelect.cloneNode(true);
+                                columnSelect.parentNode.replaceChild(newColumnSelect, columnSelect);
+                                newColumnSelect.addEventListener('change', updateExcelPreview);
+                            }
                             
                             const newCheckbox = headerCheckbox.cloneNode(true);
                             headerCheckbox.parentNode.replaceChild(newCheckbox, headerCheckbox);
@@ -1008,11 +1034,13 @@
                         
                         document.getElementById('excelOptions').classList.remove('hidden');
                         
-                        // Agregar listeners
-                        const columnSelect = document.getElementById('columnSelect');
-                        const newColumnSelect = columnSelect.cloneNode(true);
-                        columnSelect.parentNode.replaceChild(newColumnSelect, columnSelect);
-                        newColumnSelect.addEventListener('change', updateExcelPreview);
+                        // Agregar listeners a los 3 selectores
+                        for (let i = 1; i <= 3; i++) {
+                            const columnSelect = document.getElementById(`columnSelect${i}`);
+                            const newColumnSelect = columnSelect.cloneNode(true);
+                            columnSelect.parentNode.replaceChild(newColumnSelect, columnSelect);
+                            newColumnSelect.addEventListener('change', updateExcelPreview);
+                        }
                         
                         const newCheckbox = headerCheckbox.cloneNode(true);
                         headerCheckbox.parentNode.replaceChild(newCheckbox, headerCheckbox);
@@ -1033,26 +1061,31 @@
             if (!excelData || excelData.length === 0) return;
             
             const hasHeader = document.getElementById('hasHeaderCheckbox').checked;
-            const columnSelect = document.getElementById('columnSelect');
-            columnSelect.innerHTML = '<option value="">Selecciona una columna...</option>';
-            
             const firstRow = excelData[0];
             const numColumns = firstRow.length;
             
-            for (let i = 0; i < numColumns; i++) {
-                const option = document.createElement('option');
-                option.value = i;
+            // Poblar los 3 selectores
+            for (let selectNum = 1; selectNum <= 3; selectNum++) {
+                const columnSelect = document.getElementById(`columnSelect${selectNum}`);
+                columnSelect.innerHTML = '<option value="">No seleccionada</option>';
                 
-                if (hasHeader) {
-                    // Mostrar el nombre del header
-                    option.textContent = firstRow[i] || `Columna ${i + 1}`;
-                } else {
-                    // Mostrar número de columna y una muestra del primer dato
-                    const sampleData = firstRow[i] ? ` (ej: ${firstRow[i]})` : '';
-                    option.textContent = `Columna ${i + 1}${sampleData}`;
+                for (let i = 0; i < numColumns; i++) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    
+                    if (hasHeader) {
+                        // Mostrar el nombre del header
+                        option.textContent = firstRow[i] || `Columna ${i + 1}`;
+                        option.dataset.columnName = firstRow[i] || `Columna ${i + 1}`;
+                    } else {
+                        // Mostrar número de columna y una muestra del primer dato
+                        const sampleData = firstRow[i] ? ` (ej: ${firstRow[i]})` : '';
+                        option.textContent = `Columna ${i + 1}${sampleData}`;
+                        option.dataset.columnName = `Columna ${i + 1}`;
+                    }
+                    
+                    columnSelect.appendChild(option);
                 }
-                
-                columnSelect.appendChild(option);
             }
         }
 
@@ -1080,9 +1113,27 @@
         }
 
         function updateExcelPreview() {
-            const columnIndex = parseInt(document.getElementById('columnSelect').value);
+            // Recoger todas las columnas seleccionadas
+            selectedColumns = [];
+            columnNames = [];
             
-            if (isNaN(columnIndex) || !excelData) {
+            for (let i = 1; i <= 3; i++) {
+                const select = document.getElementById(`columnSelect${i}`);
+                const columnIndex = parseInt(select.value);
+                
+                if (!isNaN(columnIndex) && excelData) {
+                    const selectedOption = select.options[select.selectedIndex];
+                    const columnName = selectedOption.dataset.columnName || `Columna ${i}`;
+                    
+                    selectedColumns.push({
+                        index: columnIndex,
+                        name: columnName
+                    });
+                    columnNames.push(columnName);
+                }
+            }
+            
+            if (selectedColumns.length === 0 || !excelData) {
                 document.getElementById('previewCount').textContent = '0';
                 document.getElementById('previewSection').classList.add('hidden');
                 allExcelCodes = [];
@@ -1091,34 +1142,58 @@
             
             // Usar el checkbox para determinar si hay header
             const hasHeader = document.getElementById('hasHeaderCheckbox').checked;
-            
-            // Extraer códigos de la columna seleccionada
-            // Si tiene header, saltar la primera fila; si no, incluir todas
             const startRow = hasHeader ? 1 : 0;
             
-            allExcelCodes = excelData
-                .slice(startRow)
-                .map(row => row[columnIndex])
-                .filter(cell => cell && cell.toString().trim() !== '')
-                .map(cell => cell.toString().trim());
+            // Extraer códigos de todas las columnas seleccionadas
+            // Cada fila tendrá un array de códigos (uno por cada columna seleccionada)
+            allExcelCodes = [];
+            
+            for (let rowIndex = startRow; rowIndex < excelData.length; rowIndex++) {
+                const row = excelData[rowIndex];
+                const rowCodes = [];
+                let hasValidCode = false;
+                
+                selectedColumns.forEach(col => {
+                    const cellValue = row[col.index];
+                    if (cellValue && cellValue.toString().trim() !== '') {
+                        rowCodes.push({
+                            code: cellValue.toString().trim(),
+                            columnName: col.name
+                        });
+                        hasValidCode = true;
+                    }
+                });
+                
+                if (hasValidCode && rowCodes.length > 0) {
+                    allExcelCodes.push(rowCodes);
+                }
+            }
             
             document.getElementById('previewCount').textContent = allExcelCodes.length;
             
-            // Mostrar vista previa de los primeros 5 elementos
+            // Mostrar vista previa de los primeros 3 registros
             if (allExcelCodes.length > 0) {
                 const previewList = document.getElementById('previewList');
-                const previewItems = allExcelCodes.slice(0, 5);
-                const previewHTML = previewItems.map((code, idx) => 
-                    `<div style="padding: 5px 0; border-bottom: 1px solid #e5e7eb;">
-                        <span style="color: #9ca3af; margin-right: 10px;">${idx + 1}.</span>
-                        <span style="color: #1f2937; font-weight: 600;">${code}</span>
-                    </div>`
-                ).join('');
+                const previewItems = allExcelCodes.slice(0, 3);
+                
+                const previewHTML = previewItems.map((rowCodes, idx) => {
+                    const codesHTML = rowCodes.map(item => 
+                        `<div style="margin-left: 20px; padding: 4px 0;">
+                            <span style="color: #8b5cf6; font-weight: 600;">${item.columnName}:</span> 
+                            <span style="color: #1f2937; font-weight: 700;">${item.code}</span>
+                        </div>`
+                    ).join('');
+                    
+                    return `<div style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; margin-bottom: 8px;">
+                        <div style="color: #9ca3af; font-weight: 600; margin-bottom: 4px;">Registro ${idx + 1}:</div>
+                        ${codesHTML}
+                    </div>`;
+                }).join('');
                 
                 previewList.innerHTML = previewHTML;
                 
-                if (allExcelCodes.length > 5) {
-                    previewList.innerHTML += `<div style="padding: 8px 0; color: #6b7280; font-style: italic;">... y ${allExcelCodes.length - 5} más</div>`;
+                if (allExcelCodes.length > 3) {
+                    previewList.innerHTML += `<div style="padding: 8px 0; color: #6b7280; font-style: italic;">... y ${allExcelCodes.length - 3} registros más</div>`;
                 }
                 
                 document.getElementById('previewSection').classList.remove('hidden');
@@ -1126,7 +1201,7 @@
                 document.getElementById('previewSection').classList.add('hidden');
             }
             
-            // Actualizar el límite máximo si es necesario
+            // Actualizar el límite máximo
             const limitInput = document.getElementById('codeLimit');
             if (allExcelCodes.length < parseInt(limitInput.value)) {
                 limitInput.value = allExcelCodes.length;
@@ -1195,7 +1270,7 @@
                 return;
             }
 
-            const code = codes[currentCodeIndex];
+            const currentCodes = codes[currentCodeIndex]; // Ahora es un array de objetos {code, columnName}
             const displayMode = document.getElementById('displayMode').value;
             const codeDisplay = document.getElementById('codeDisplay');
             
@@ -1207,35 +1282,84 @@
             const randomQuantity = Math.floor(Math.random() * (maxQty - minQty + 1)) + minQty;
             document.getElementById('quantityDisplay').textContent = randomQuantity;
             
-            // Guardar la cantidad generada temporalmente
             currentQuantity = randomQuantity;
 
             const progress = ((currentCodeIndex + 1) / codes.length) * 100;
             document.getElementById('progressFill').style.width = progress + '%';
             document.getElementById('progressPercentage').textContent = Math.round(progress) + '%';
 
-            if (displayMode === 'barcode') {
-                codeDisplay.innerHTML = '<svg id="barcodeCanvas"></svg>';
-                try {
-                    // Ajustar tamaño del código según pantalla
-                    const isMobile = window.innerWidth <= 768;
-                    const isSmall = window.innerWidth <= 480;
-                    const barcodeHeight = isSmall ? 60 : (isMobile ? 70 : 90);
-                    const barcodeWidth = isSmall ? 1.2 : (isMobile ? 1.5 : 2);
+            // Verificar si es un array de códigos o un código simple
+            const isMultiColumn = Array.isArray(currentCodes);
+            
+            if (isMultiColumn) {
+                // Mostrar múltiples códigos con sus nombres de columna
+                let html = '<div style="display: flex; flex-direction: column; gap: 12px; align-items: center;">';
+                
+                currentCodes.forEach((item, index) => {
+                    const columnLabel = `<div style="font-size: 0.9em; color: #8b5cf6; font-weight: 700; margin-bottom: 6px; text-align: center;">${item.columnName}</div>`;
                     
-                    JsBarcode("#barcodeCanvas", code, {
-                        format: "CODE128",
-                        width: barcodeWidth,
-                        height: barcodeHeight,
-                        displayValue: true,
-                        fontSize: isSmall ? 14 : (isMobile ? 16 : 18),
-                        margin: 5
+                    if (displayMode === 'barcode') {
+                        html += `<div style="margin-bottom: ${index < currentCodes.length - 1 ? '8px' : '0'};">
+                            ${columnLabel}
+                            <svg id="barcodeCanvas${index}"></svg>
+                        </div>`;
+                    } else {
+                        html += `<div style="margin-bottom: ${index < currentCodes.length - 1 ? '8px' : '0'};">
+                            ${columnLabel}
+                            <div class="code-number">${item.code}</div>
+                        </div>`;
+                    }
+                });
+                
+                html += '</div>';
+                codeDisplay.innerHTML = html;
+                
+                // Generar códigos de barras si es necesario
+                if (displayMode === 'barcode') {
+                    currentCodes.forEach((item, index) => {
+                        try {
+                            const isMobile = window.innerWidth <= 768;
+                            const isSmall = window.innerWidth <= 480;
+                            const barcodeHeight = isSmall ? 60 : (isMobile ? 70 : 90);
+                            const barcodeWidth = isSmall ? 1.2 : (isMobile ? 1.5 : 2);
+                            
+                            JsBarcode(`#barcodeCanvas${index}`, item.code, {
+                                format: "CODE128",
+                                width: barcodeWidth,
+                                height: barcodeHeight,
+                                displayValue: true,
+                                fontSize: isSmall ? 14 : (isMobile ? 16 : 18),
+                                margin: 5
+                            });
+                        } catch (error) {
+                            document.getElementById(`barcodeCanvas${index}`).outerHTML = `<div class="code-number">${item.code}</div>`;
+                        }
                     });
-                } catch (error) {
-                    codeDisplay.innerHTML = `<div class="code-number">${code}</div>`;
                 }
             } else {
-                codeDisplay.innerHTML = `<div class="code-number">${code}</div>`;
+                // Código simple (retrocompatibilidad)
+                if (displayMode === 'barcode') {
+                    codeDisplay.innerHTML = '<svg id="barcodeCanvas"></svg>';
+                    try {
+                        const isMobile = window.innerWidth <= 768;
+                        const isSmall = window.innerWidth <= 480;
+                        const barcodeHeight = isSmall ? 60 : (isMobile ? 70 : 90);
+                        const barcodeWidth = isSmall ? 1.2 : (isMobile ? 1.5 : 2);
+                        
+                        JsBarcode("#barcodeCanvas", currentCodes, {
+                            format: "CODE128",
+                            width: barcodeWidth,
+                            height: barcodeHeight,
+                            displayValue: true,
+                            fontSize: isSmall ? 14 : (isMobile ? 16 : 18),
+                            margin: 5
+                        });
+                    } catch (error) {
+                        codeDisplay.innerHTML = `<div class="code-number">${currentCodes}</div>`;
+                    }
+                } else {
+                    codeDisplay.innerHTML = `<div class="code-number">${currentCodes}</div>`;
+                }
             }
 
             const practiceMode = document.getElementById('practiceMode').value;
@@ -1277,10 +1401,22 @@
         function nextCode() {
             clearInterval(timer);
             
-            results.push({
-                code: codes[currentCodeIndex],
-                quantity: currentQuantity
-            });
+            const currentCodes = codes[currentCodeIndex];
+            
+            // Verificar si es multicolumna o código simple
+            if (Array.isArray(currentCodes)) {
+                // Guardar todos los códigos de este registro
+                results.push({
+                    codes: currentCodes, // Array de {code, columnName}
+                    quantity: currentQuantity
+                });
+            } else {
+                // Código simple (retrocompatibilidad)
+                results.push({
+                    code: currentCodes,
+                    quantity: currentQuantity
+                });
+            }
 
             currentCodeIndex++;
             showCurrentCode();
@@ -1307,7 +1443,24 @@
             results.forEach((result, index) => {
                 const row = tableBody.insertRow();
                 row.insertCell(0).textContent = index + 1;
-                row.insertCell(1).textContent = result.code;
+                
+                // Verificar si tiene múltiples códigos o uno solo
+                if (result.codes && Array.isArray(result.codes)) {
+                    // Múltiples códigos
+                    const codesHTML = result.codes.map(item => 
+                        `<div style="margin: 3px 0;">
+                            <span style="color: #8b5cf6; font-weight: 600; font-size: 0.85em;">${item.columnName}:</span> 
+                            <span style="font-family: 'Courier New', monospace;">${item.code}</span>
+                        </div>`
+                    ).join('');
+                    row.insertCell(1).innerHTML = codesHTML;
+                } else {
+                    // Código simple
+                    const codeCell = row.insertCell(1);
+                    codeCell.textContent = result.code;
+                    codeCell.style.fontFamily = "'Courier New', monospace";
+                }
+                
                 row.insertCell(2).textContent = result.quantity;
                 total += result.quantity;
             });
@@ -1338,7 +1491,15 @@
             document.getElementById('progressFill').style.width = '0%';
             document.getElementById('fileName').textContent = '';
             document.getElementById('fileInput').value = '';
-            document.getElementById('columnSelect').innerHTML = '<option value="">Selecciona una columna...</option>';
+            
+            // Limpiar los 3 selectores
+            for (let i = 1; i <= 3; i++) {
+                const select = document.getElementById(`columnSelect${i}`);
+                if (select) {
+                    select.innerHTML = '<option value="">No seleccionada</option>';
+                }
+            }
+            
             document.getElementById('previewCount').textContent = '0';
             document.getElementById('codeLimit').value = '50';
         }
@@ -1512,17 +1673,51 @@
                 return;
             }
 
-            const ws_data = [
-                ['#', 'Código de Barras', 'Cantidad']
-            ];
+            // Determinar si hay múltiples columnas
+            const hasMultipleColumns = results[0].codes && Array.isArray(results[0].codes);
+            
+            let ws_data = [];
+            
+            if (hasMultipleColumns) {
+                // Header con nombres de columnas
+                const columnHeaders = ['#'];
+                results[0].codes.forEach(item => {
+                    columnHeaders.push(item.columnName);
+                });
+                columnHeaders.push('Cantidad');
+                ws_data.push(columnHeaders);
+                
+                // Datos
+                results.forEach((result, index) => {
+                    const row = [index + 1];
+                    result.codes.forEach(item => {
+                        row.push(item.code);
+                    });
+                    row.push(result.quantity);
+                    ws_data.push(row);
+                });
+                
+                // Total
+                const totalRow = [''];
+                for (let i = 0; i < results[0].codes.length; i++) {
+                    totalRow.push('');
+                }
+                totalRow[totalRow.length - 1] = 'TOTAL';
+                totalRow.push(results.reduce((sum, r) => sum + r.quantity, 0));
+                ws_data.push(totalRow);
+            } else {
+                // Formato simple
+                ws_data = [
+                    ['#', 'Código de Barras', 'Cantidad']
+                ];
 
-            results.forEach((result, index) => {
-                ws_data.push([index + 1, result.code, result.quantity]);
-            });
+                results.forEach((result, index) => {
+                    ws_data.push([index + 1, result.code, result.quantity]);
+                });
 
-            // Agregar total
-            const total = results.reduce((sum, r) => sum + r.quantity, 0);
-            ws_data.push(['', 'TOTAL', total]);
+                const total = results.reduce((sum, r) => sum + r.quantity, 0);
+                ws_data.push(['', 'TOTAL', total]);
+            }
 
             const ws = XLSX.utils.aoa_to_sheet(ws_data);
             const wb = XLSX.utils.book_new();
