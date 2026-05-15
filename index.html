@@ -3,1833 +3,1034 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventario Pro v2.0 - Sistema Avanzado</title>
+    <title>Inventario Pro v4.0</title>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
-            min-height: 100vh;
-            padding: 10px;
-            margin: 0;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
-            height: calc(100vh - 20px);
-            display: flex;
-            flex-direction: column;
-            animation: slideIn 0.5s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @media (max-width: 768px) {
-            body {
-                padding: 0;
-            }
-            
-            .container {
-                border-radius: 0;
-                height: 100vh;
-            }
-        }
-
-        .header {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
-            color: white;
-            padding: 25px 20px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
-            background-size: 50px 50px;
-            animation: moveBackground 20s linear infinite;
-        }
-
-        @keyframes moveBackground {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(50px, 50px); }
-        }
-
-        .header h1 {
-            font-size: 1.9em;
-            margin-bottom: 5px;
-            position: relative;
-            z-index: 1;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            font-weight: 700;
-        }
-
-        .header p {
-            font-size: 0.95em;
-            position: relative;
-            z-index: 1;
-            opacity: 0.95;
-        }
-
-        @media (max-width: 768px) {
-            .header {
-                padding: 20px 15px;
-            }
-            
-            .header h1 {
-                font-size: 1.5em;
-            }
-            
-            .header p {
-                font-size: 0.85em;
-            }
-        }
-
-        .setup-panel {
-            padding: 20px;
-            overflow-y: auto;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        .practice-panel {
-            padding: 12px;
-            overflow: hidden;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @media (max-width: 768px) {
-            .setup-panel, .practice-panel {
-                padding: 10px;
-            }
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .form-group {
-            margin-bottom: 18px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #1f2937;
-            font-size: 0.95em;
-        }
-
-        .form-group input[type="text"],
-        .form-group input[type="number"],
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px 14px;
-            border: 2px solid #e5e7eb;
-            border-radius: 10px;
-            font-size: 15px;
-            transition: all 0.3s;
-            font-family: inherit;
-            background: white;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #8b5cf6;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
-            transform: translateY(-1px);
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 100px;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-        }
-
-        .file-upload {
-            border: 3px dashed #8b5cf6;
-            padding: 30px 20px;
-            border-radius: 12px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(217, 70, 239, 0.05) 100%);
-        }
-
-        .file-upload:hover {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(217, 70, 239, 0.1) 100%);
-            border-color: #d946ef;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.2);
-        }
-
-        .file-upload input {
-            display: none;
-        }
-
-        .file-upload p:first-child {
-            font-size: 1.1em;
-            font-weight: 600;
-            color: #8b5cf6;
-            margin-bottom: 5px;
-        }
-
-        .options-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 18px;
-        }
-
-        @media (max-width: 768px) {
-            .options-grid {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
-            color: white;
-            border: none;
-            padding: 14px 28px;
-            font-size: 15px;
-            font-weight: 600;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-            width: 100%;
-            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-
-        .btn:hover::before {
-            width: 300px;
-            height: 300px;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
-        }
-
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        @media (max-width: 768px) {
-            .btn {
-                padding: 12px 20px;
-                font-size: 14px;
-            }
-        }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-            box-shadow: 0 4px 15px rgba(107, 114, 128, 0.3);
-        }
-
-        .btn-secondary:hover {
-            box-shadow: 0 6px 20px rgba(107, 114, 128, 0.4);
-        }
-
-        .practice-display {
-            text-align: center;
-            padding: 4px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-        }
-
-        @media (max-width: 768px) {
-            .practice-display {
-                padding: 2px;
-            }
-        }
-
-        .progress-bar {
-            background: linear-gradient(90deg, #e5e7eb 0%, #f3f4f6 100%);
-            height: 8px;
-            border-radius: 10px;
-            margin-bottom: 12px;
-            overflow: hidden;
-            flex-shrink: 0;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        @media (max-width: 768px) {
-            .progress-bar {
-                height: 6px;
-                margin-bottom: 10px;
-            }
-        }
-
-        .progress-fill {
-            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
-            height: 100%;
-            transition: width 0.5s ease;
-            box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .progress-fill::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            right: 0;
-            background: linear-gradient(
-                90deg,
-                transparent,
-                rgba(255, 255, 255, 0.3),
-                transparent
-            );
-            animation: shimmer 2s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
-        .code-display {
-            margin: 4px 0;
-            flex-shrink: 0;
-            animation: scaleIn 0.4s ease-out;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        @keyframes scaleIn {
-            from {
-                opacity: 0;
-                transform: scale(0.8);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .code-display {
-                margin: 3px 0;
-            }
-        }
-
-        #barcodeCanvas {
-            max-width: 100%;
-            height: auto;
-            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));
-        }
-
-        .code-number {
-            font-size: 2.5em;
-            font-weight: 700;
-            color: #1f2937;
-            font-family: 'Courier New', monospace;
-            letter-spacing: 5px;
-            word-break: break-all;
-            padding: 18px 22px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(217, 70, 239, 0.08) 100%);
-            border: 2px solid rgba(139, 92, 246, 0.3);
-            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.1);
-        }
-
-        @media (max-width: 768px) {
-            .code-number {
-                font-size: 1.8em;
-                letter-spacing: 3px;
-                padding: 15px 18px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .code-number {
-                font-size: 1.4em;
-                letter-spacing: 2px;
-                padding: 12px 15px;
-            }
-        }
-
-        .quantity-input-section {
-            margin-top: 4px;
-            flex-shrink: 0;
-        }
-
-        .quantity-input-section label {
-            font-size: 0.85em;
-            margin-bottom: 5px;
-            color: #4b5563;
-            font-weight: 600;
-        }
-
-        @media (max-width: 768px) {
-            .quantity-input-section label {
-                font-size: 0.8em;
-                margin-bottom: 4px;
-            }
-        }
-
-        .quantity-display {
-            font-size: 3em;
-            font-weight: 800;
-            color: #8b5cf6;
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(217, 70, 239, 0.1) 100%);
-            padding: 16px 28px;
-            border-radius: 15px;
-            border: 3px solid #8b5cf6;
-            display: inline-block;
-            min-width: 110px;
-            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.25);
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.03);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .quantity-display {
-                font-size: 2.5em;
-                padding: 14px 24px;
-                min-width: 95px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .quantity-display {
-                font-size: 2em;
-                padding: 12px 20px;
-                min-width: 85px;
-            }
-        }
-
-        .timer {
-            font-size: 1.2em;
-            color: #764ba2;
-            margin-bottom: 10px;
-            font-weight: 700;
-            flex-shrink: 0;
-            text-shadow: 0 2px 5px rgba(118, 75, 162, 0.2);
-            transition: color 0.3s ease;
-        }
-
-        .timer.warning {
-            color: #ef4444 !important;
-        }
-
-        @media (max-width: 768px) {
-            .timer {
-                font-size: 1.1em;
-                margin-bottom: 8px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .timer {
-                font-size: 1em;
-            }
-        }
-
-        .results-panel {
-            padding: 20px;
-            overflow-y: auto;
-            flex: 1;
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @media (max-width: 768px) {
-            .results-panel {
-                padding: 15px;
-            }
-        }
-
-        .results-panel h2 {
-            color: #1f2937;
-            margin-bottom: 20px;
-            font-size: 1.6em;
-            text-align: center;
-            font-weight: 700;
-        }
-
-        .results-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            font-size: 0.95em;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        .results-table th,
-        .results-table td {
-            padding: 14px 12px;
-            text-align: left;
-            border-bottom: 1px solid #f3f4f6;
-        }
-
-        .results-table th {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
-            color: white;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.85em;
-            letter-spacing: 0.5px;
-        }
-
-        .results-table tbody tr {
-            transition: all 0.3s;
-            background: white;
-        }
-
-        .results-table tbody tr:nth-child(even) {
-            background: #fafafa;
-        }
-
-        .results-table tbody tr:hover {
-            background: rgba(139, 92, 246, 0.08);
-            transform: scale(1.01);
-        }
-
-        @media (max-width: 768px) {
-            .results-table {
-                font-size: 0.85em;
-            }
-            
-            .results-table th,
-            .results-table td {
-                padding: 10px 6px;
-            }
-        }
-
-        .total-section {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            text-align: center;
-            font-size: 1.5em;
-            margin-top: 20px;
-            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
-            animation: slideUp 0.5s ease-out;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .total-section div:first-child {
-            font-weight: 600;
-            opacity: 0.95;
-        }
-
-        .total-section div:last-child {
-            font-weight: 800;
-        }
-
-        .info-text {
-            color: #6b7280;
-            font-size: 0.9em;
-            margin-top: 5px;
-        }
-
-        .counter {
-            font-size: 1em;
-            color: #6b7280;
-            margin-bottom: 10px;
-            flex-shrink: 0;
-            font-weight: 600;
-        }
-
-        @media (max-width: 768px) {
-            .counter {
-                font-size: 0.9em;
-                margin-bottom: 8px;
-            }
-        }
-
-        .info-box {
-            margin-bottom: 18px;
-            padding: 16px;
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(217, 70, 239, 0.08) 100%);
-            border-left: 4px solid #8b5cf6;
-            border-radius: 10px;
-            animation: slideIn 0.5s ease-out;
-        }
-
-        .info-box strong {
-            color: #8b5cf6;
-            display: block;
-            margin-bottom: 10px;
-            font-size: 1.05em;
-        }
-
-        .info-box ul {
-            list-style: none;
-            padding-left: 0;
-        }
-
-        .info-box li {
-            padding: 6px 0;
-            padding-left: 24px;
-            position: relative;
-            color: #4b5563;
-            font-size: 0.95em;
-        }
-
-        .info-box li::before {
-            content: '→';
-            position: absolute;
-            left: 0;
-            color: #8b5cf6;
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-
-        .excel-options {
-            margin-bottom: 18px;
-            padding: 20px;
-            background: white;
-            border: 2px solid #8b5cf6;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.1);
-            animation: slideDown 0.3s ease-out;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Scrollbar personalizado */
-        ::-webkit-scrollbar {
-            width: 10px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(135deg, #7c3aed 0%, #c026d3 100%);
-        }
-
-        /* Mejora visual adicional */
-        .stat-badge {
-            display: inline-block;
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(217, 70, 239, 0.1) 100%);
-            color: #8b5cf6;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.9em;
-            font-weight: 600;
-            margin: 5px;
-            border: 1px solid rgba(139, 92, 246, 0.3);
-        }
-
-        /* Grid responsive para múltiples códigos */
-        @media (max-width: 768px) {
-            .code-display > div > div {
-                grid-template-columns: 1fr !important;
-            }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#d946ef 100%);min-height:100vh;padding:10px}
+        .container{max-width:1000px;margin:0 auto;background:white;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;height:calc(100vh - 20px);display:flex;flex-direction:column;position:relative;z-index:1;animation:slideIn .5s ease-out}
+        @keyframes slideIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+        @media(max-width:768px){body{padding:0}.container{border-radius:0;height:100vh}}
+        .header{background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#d946ef 100%);color:white;padding:22px 20px;text-align:center;position:relative;overflow:hidden;flex-shrink:0}
+        .header::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(255,255,255,.1) 1px,transparent 1px);background-size:50px 50px;animation:moveBg 20s linear infinite}
+        @keyframes moveBg{0%{transform:translate(0,0)}100%{transform:translate(50px,50px)}}
+        .header h1{font-size:1.8em;margin-bottom:4px;position:relative;z-index:1;font-weight:700;text-shadow:0 2px 10px rgba(0,0,0,.2)}
+        .header p{font-size:.9em;position:relative;z-index:1;opacity:.95}
+        @media(max-width:768px){.header{padding:16px 12px}.header h1{font-size:1.4em}}
+
+        /* PANELS */
+        .setup-panel{padding:20px;overflow-y:auto;flex:1;display:flex;flex-direction:column;animation:fadeIn .3s}
+        .practice-panel{padding:10px;overflow:hidden;flex:1;display:flex;flex-direction:column;animation:fadeIn .3s}        .area-panel{overflow:hidden;flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 50%,#0f172a 100%);animation:fadeIn .3s}
+        .results-panel{padding:20px;overflow-y:auto;flex:1;animation:fadeIn .3s}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        @media(max-width:768px){.setup-panel,.practice-panel{padding:10px}.results-panel{padding:14px}}
+        .hidden{display:none!important}
+
+        /* FORMS */
+        .form-group{margin-bottom:16px}
+        .form-group label{display:block;margin-bottom:7px;font-weight:600;color:#1f2937;font-size:.93em}
+        .form-group input,.form-group select,.form-group textarea{width:100%;padding:11px 13px;border:2px solid #e5e7eb;border-radius:10px;font-size:15px;transition:all .3s;font-family:inherit;background:white}
+        .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:#8b5cf6;box-shadow:0 0 0 3px rgba(139,92,246,.1);transform:translateY(-1px)}
+        .form-group textarea{resize:vertical;min-height:90px;font-family:'Courier New',monospace;font-size:13px}
+        .file-upload{border:3px dashed #8b5cf6;padding:26px 20px;border-radius:12px;text-align:center;cursor:pointer;transition:all .3s;background:linear-gradient(135deg,rgba(139,92,246,.05),rgba(217,70,239,.05))}
+        .file-upload:hover{background:linear-gradient(135deg,rgba(139,92,246,.1),rgba(217,70,239,.1));border-color:#d946ef;transform:translateY(-2px);box-shadow:0 5px 15px rgba(139,92,246,.2)}
+        .file-upload input{display:none}
+        .file-upload p:first-child{font-size:1em;font-weight:600;color:#8b5cf6;margin-bottom:4px}
+        .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+        @media(max-width:768px){.options-grid{grid-template-columns:1fr;gap:12px}}
+
+        /* BUTTONS */
+        .btn{background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#d946ef 100%);color:white;border:none;padding:13px 24px;font-size:15px;font-weight:600;border-radius:10px;cursor:pointer;transition:all .3s;width:100%;box-shadow:0 4px 15px rgba(139,92,246,.3);position:relative;overflow:hidden}
+        .btn::before{content:'';position:absolute;top:50%;left:50%;width:0;height:0;border-radius:50%;background:rgba(255,255,255,.3);transform:translate(-50%,-50%);transition:width .6s,height .6s}
+        .btn:hover::before{width:300px;height:300px}
+        .btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(139,92,246,.4)}
+        .btn:active{transform:translateY(0)}
+        .btn-secondary{background:linear-gradient(135deg,#6b7280,#4b5563);box-shadow:0 4px 15px rgba(107,114,128,.3)}
+        .btn-success{background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 4px 15px rgba(16,185,129,.3)}
+        .btn-warning{background:linear-gradient(135deg,#f59e0b,#d97706);box-shadow:0 4px 15px rgba(245,158,11,.3)}
+        @media(max-width:768px){.btn{padding:11px 18px;font-size:14px}}
+
+        /* PRACTICE */
+        .progress-bar{background:#f3f4f6;height:7px;border-radius:10px;margin-bottom:10px;overflow:hidden;flex-shrink:0;box-shadow:inset 0 2px 4px rgba(0,0,0,.1)}
+        .progress-fill{background:linear-gradient(90deg,#6366f1,#8b5cf6,#d946ef);height:100%;transition:width .5s;box-shadow:0 0 10px rgba(139,92,246,.5);position:relative;overflow:hidden}
+        .progress-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:shimmer 2s infinite}
+        @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+        .counter{font-size:.9em;color:#6b7280;margin-bottom:8px;flex-shrink:0;font-weight:600;text-align:center}
+        .timer{font-size:1.1em;color:#764ba2;margin-bottom:6px;font-weight:700;flex-shrink:0;text-align:center;transition:color .3s}
+        .timer.warning{color:#ef4444!important;animation:timerWarn .5s ease-in-out infinite}
+        @keyframes timerWarn{0%,100%{opacity:1}50%{opacity:.6}}
+
+        /* --- PRACTICE LAYOUT: code LEFT, product shelf RIGHT --- */
+        .practice-main{display:flex;flex:1;overflow:hidden;flex-direction:row;min-height:0;gap:8px;align-items:stretch}
+
+        /* LEFT: code + quantity — fixed width so shelf gets rest */
+        .practice-left{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:0 0 auto;width:260px;text-align:center;padding:4px 2px;min-width:0;overflow:hidden}
+
+        /* RIGHT: product shelf */
+        .product-shelf{flex:1;min-width:0;display:flex;flex-direction:column;align-items:stretch;background:linear-gradient(160deg,#f8f7ff 0%,#f0ebff 100%);border-radius:14px;border:2px solid rgba(139,92,246,.18);padding:8px;overflow:hidden;animation:scaleIn .35s ease-out}
+        .product-shelf.shelf-hidden{display:none}
+
+        /* Grid fills the shelf — NO scroll, items are sized to fit */
+        .shelf-grid{display:grid;gap:4px;width:100%;height:100%;overflow:hidden}
+
+        /* Each cell */
+        .shelf-item{border-radius:7px;overflow:hidden;border:1.5px solid rgba(139,92,246,.15);background:white;display:flex;align-items:center;justify-content:center}
+        .shelf-item svg{width:82%;height:82%;display:block}
+        .shelf-item-emoji{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.6em;background:linear-gradient(135deg,#f3f4f6,#ede9fe)}
+
+        /* Code display */
+        .code-display{margin:3px 0;flex-shrink:0;animation:scaleIn .4s ease-out;width:100%;display:flex;justify-content:center;align-items:center}
+        @keyframes scaleIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+        .code-number{font-size:1.6em;font-weight:700;color:#1f2937;font-family:'Courier New',monospace;letter-spacing:3px;word-break:break-all;padding:10px 14px;border-radius:10px;background:linear-gradient(135deg,rgba(139,92,246,.08),rgba(217,70,239,.08));border:2px solid rgba(139,92,246,.3);box-shadow:0 3px 10px rgba(139,92,246,.1);max-width:100%}
+        @media(max-width:768px){.code-number{font-size:1.2em;letter-spacing:2px;padding:8px 10px}}
+        @media(max-width:480px){.code-number{font-size:1em;letter-spacing:1px;padding:7px 8px}}
+
+        /* Quantity display */
+        .quantity-section{margin-top:5px;flex-shrink:0}
+        .quantity-display{font-size:2.4em;font-weight:800;color:#8b5cf6;background:linear-gradient(135deg,rgba(139,92,246,.1),rgba(217,70,239,.1));padding:10px 20px;border-radius:12px;border:3px solid #8b5cf6;display:inline-block;min-width:80px;box-shadow:0 6px 18px rgba(139,92,246,.22);animation:pulse 2s ease-in-out infinite}
+        .quantity-display.hidden-qty{display:none}
+        .quantity-mystery{font-size:2.4em;font-weight:800;color:#6b7280;background:linear-gradient(135deg,rgba(107,114,128,.1),rgba(75,85,99,.1));padding:10px 20px;border-radius:12px;border:3px dashed #9ca3af;display:inline-block;min-width:80px;letter-spacing:5px}
+        @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+        @media(max-width:768px){.quantity-display,.quantity-mystery{font-size:1.8em;padding:8px 14px;min-width:70px}}
+
+        /* RESULTS */
+        .results-panel h2{color:#1f2937;margin-bottom:18px;font-size:1.5em;text-align:center;font-weight:700}
+        .results-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.93em;box-shadow:0 2px 15px rgba(0,0,0,.08);border-radius:12px;overflow:hidden}
+        .results-table th,.results-table td{padding:12px 10px;text-align:left;border-bottom:1px solid #f3f4f6}
+        .results-table th{background:linear-gradient(135deg,#6366f1,#8b5cf6,#d946ef);color:white;font-weight:600;text-transform:uppercase;font-size:.82em;letter-spacing:.5px}
+        .results-table tbody tr{transition:all .2s;background:white}
+        .results-table tbody tr:nth-child(even){background:#fafafa}
+        .results-table tbody tr:hover{background:rgba(139,92,246,.07)}
+        .total-section{background:linear-gradient(135deg,#6366f1,#8b5cf6,#d946ef);color:white;padding:22px;border-radius:15px;text-align:center;font-size:1.4em;margin-top:18px;box-shadow:0 10px 30px rgba(139,92,246,.3);animation:slideUp .5s ease-out}
+        @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+        /* MISC */
+        .info-text{color:#6b7280;font-size:.88em;margin-top:4px}
+        .info-box{margin-bottom:16px;padding:14px;background:linear-gradient(135deg,rgba(139,92,246,.08),rgba(217,70,239,.08));border-left:4px solid #8b5cf6;border-radius:10px}
+        .info-box strong{color:#8b5cf6;display:block;margin-bottom:8px;font-size:1em}
+        .info-box ul{list-style:none;padding-left:0}
+        .info-box li{padding:5px 0 5px 22px;position:relative;color:#4b5563;font-size:.92em}
+        .info-box li::before{content:'→';position:absolute;left:0;color:#8b5cf6;font-weight:bold}
+        .excel-options{margin-bottom:16px;padding:18px;background:white;border:2px solid #8b5cf6;border-radius:12px;box-shadow:0 4px 15px rgba(139,92,246,.1);animation:slideDown .3s ease-out}
+        @keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+        .stat-badge{display:inline-block;background:linear-gradient(135deg,rgba(139,92,246,.1),rgba(217,70,239,.1));color:#8b5cf6;padding:5px 12px;border-radius:20px;font-size:.88em;font-weight:600;margin:4px;border:1px solid rgba(139,92,246,.3)}
+
+        /* TOGGLES */
+        .section-title{font-size:.82em;font-weight:700;color:#8b5cf6;text-transform:uppercase;letter-spacing:1px;margin:18px 0 10px;display:flex;align-items:center;gap:8px}
+        .section-title::after{content:'';flex:1;height:2px;background:linear-gradient(90deg,rgba(139,92,246,.3),transparent);border-radius:2px}
+        .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border:2px solid #e5e7eb;border-radius:12px;margin-bottom:10px;transition:border-color .2s;gap:12px}
+        .toggle-row:hover{border-color:#8b5cf6}
+        .toggle-row .tr-label{font-weight:600;color:#1f2937;font-size:.92em;cursor:pointer;user-select:none;flex:1}
+        .toggle-row small{display:block;color:#6b7280;font-size:.8em;font-weight:400;margin-top:2px}
+        .switch{position:relative;display:inline-block;width:46px;height:25px;flex-shrink:0}
+        .switch input{opacity:0;width:0;height:0}
+        .switch .slider{position:absolute;cursor:pointer;inset:0;background:#d1d5db;transition:.3s;border-radius:25px}
+        .switch .slider:before{position:absolute;content:"";height:19px;width:19px;left:3px;bottom:3px;background:white;transition:.3s;border-radius:50%;box-shadow:0 2px 4px rgba(0,0,0,.2)}
+        .switch input:checked+.slider{background:linear-gradient(135deg,#8b5cf6,#d946ef)}
+        .switch input:checked+.slider:before{transform:translateX(21px)}
+        .time-info-badge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(139,92,246,.1),rgba(217,70,239,.1));border:1px solid rgba(139,92,246,.3);border-radius:20px;padding:4px 12px;font-size:.83em;color:#8b5cf6;font-weight:600;margin-top:5px;margin-bottom:10px}
+
+        /* AREA PANEL */
+        .area-code-display{text-align:center;animation:areaZoomIn .5s ease-out;padding:20px}
+        @keyframes areaZoomIn{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+        .area-label{font-size:1.1em;color:rgba(167,139,250,.9);font-weight:700;text-transform:uppercase;letter-spacing:6px;margin-bottom:14px}
+        .area-number-text{font-size:clamp(4em,18vw,9em);font-weight:900;font-family:'Courier New',monospace;color:white;text-shadow:0 0 40px rgba(167,139,250,.8),0 0 80px rgba(139,92,246,.5);letter-spacing:8px;line-height:1;margin-bottom:16px}
+        .area-barcode-wrap{background:white;border-radius:14px;padding:16px 20px;display:inline-block;margin-bottom:16px;box-shadow:0 0 30px rgba(139,92,246,.4)}
+        .area-countdown{font-size:.95em;color:rgba(167,139,250,.7);font-weight:600}
+        .area-countdown span{display:inline-block;background:rgba(139,92,246,.3);border:2px solid rgba(139,92,246,.5);border-radius:50%;width:38px;height:38px;line-height:34px;text-align:center;font-size:1.2em;color:white;font-weight:800;margin-left:8px}
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar{width:8px}
+        ::-webkit-scrollbar-track{background:#f1f5f9;border-radius:8px}
+        ::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#8b5cf6,#d946ef);border-radius:8px}
+
+        @media(max-width:600px){
+            .code-display>div>div{grid-template-columns:1fr!important}
+            .practice-main{flex-direction:column}
+            .practice-left{width:100%;flex:0 0 auto}
+            .product-shelf{flex:1;min-height:0}
         }
     </style>
 </head>
 <body>
-    <!-- Partículas de fondo animadas -->
-    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;" id="particles"></div>
+<div style="position:fixed;inset:0;pointer-events:none;z-index:0" id="particles"></div>
 
-    <div class="container">
-        <div class="header">
-            <div style="position: absolute; top: 15px; right: 20px; background: rgba(255,255,255,0.2); padding: 5px 14px; border-radius: 20px; font-size: 0.75em; font-weight: 700; backdrop-filter: blur(10px); z-index: 2;">v2.0 Pro</div>
-            <h1>📦 Inventario Pro</h1>
-            <p>Sistema Avanzado de Entrenamiento para Inventarios</p>
-        </div>
+<div class="container">
+    <div class="header">
+        <div style="position:absolute;top:13px;right:16px;background:rgba(255,255,255,.2);padding:4px 12px;border-radius:20px;font-size:.72em;font-weight:700;backdrop-filter:blur(10px);z-index:2">v4.0 Pro</div>
+        <h1>📦 Inventario Pro</h1>
+        <p>Sistema Avanzado de Entrenamiento para Inventarios</p>
+    </div>
 
-        <!-- Panel de Configuración -->
-        <div id="setupPanel" class="setup-panel">
-            <div class="form-group">
-                <label>📁 Cargar Códigos:</label>
-                <div style="margin-bottom: 15px;">
-                    <div class="file-upload" onclick="document.getElementById('fileInput').click()">
-                        <p>📂 Click para cargar archivo (.txt, .csv o .xlsx)</p>
-                        <p class="info-text">O arrastra un archivo aquí</p>
-                        <input type="file" id="fileInput" accept=".txt,.csv,.xlsx,.xls">
-                    </div>
-                    <p id="fileName" class="info-text" style="margin-top: 10px; font-weight: 600;"></p>
+    <!-- ============================== CONFIGURACIÓN ============================== -->
+    <div id="setupPanel" class="setup-panel">
+
+        <!-- Cargar códigos -->
+        <div class="form-group">
+            <label>📁 Cargar Códigos:</label>
+            <div style="margin-bottom:12px">
+                <div class="file-upload" onclick="document.getElementById('fileInput').click()">
+                    <p>📂 Click para cargar (.txt, .csv o .xlsx)</p>
+                    <p class="info-text">O arrastra un archivo aquí</p>
+                    <input type="file" id="fileInput" accept=".txt,.csv,.xlsx,.xls">
                 </div>
-                
-                <div id="excelOptions" class="hidden excel-options">
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: flex; align-items: center; cursor: pointer; font-size: 0.95em;">
-                            <input type="checkbox" id="hasHeaderCheckbox" checked style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
-                            <span>La primera fila contiene encabezados/títulos</span>
-                        </label>
-                        <p class="info-text" style="margin-top: 5px; margin-left: 26px;">Desactiva si tu archivo NO tiene fila de títulos</p>
-                    </div>
-                    
-                    <div style="margin-bottom: 20px;">
-                        <label style="font-weight: 700; color: #764ba2; margin-bottom: 12px; display: block;">📊 Selecciona las columnas de códigos (máximo 3):</label>
-                        
-                        <div style="display: grid; gap: 15px;">
-                            <div>
-                                <label style="font-size: 0.9em; color: #6b7280; margin-bottom: 5px; display: block;">Columna 1:</label>
-                                <select id="columnSelect1" class="column-selector" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 15px;">
-                                    <option value="">No seleccionada</option>
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label style="font-size: 0.9em; color: #6b7280; margin-bottom: 5px; display: block;">Columna 2 (opcional):</label>
-                                <select id="columnSelect2" class="column-selector" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 15px;">
-                                    <option value="">No seleccionada</option>
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label style="font-size: 0.9em; color: #6b7280; margin-bottom: 5px; display: block;">Columna 3 (opcional):</label>
-                                <select id="columnSelect3" class="column-selector" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 15px;">
-                                    <option value="">No seleccionada</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div id="previewSection" class="hidden" style="margin-top: 15px; padding: 15px; background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb;">
-                        <strong style="display: block; margin-bottom: 10px; color: #6b7280; font-size: 0.9em;">📋 Vista previa (primeros 3 registros):</strong>
-                        <div id="previewList" style="font-family: 'Courier New', monospace; font-size: 0.85em; color: #374151; line-height: 1.8;"></div>
-                    </div>
-                    
-                    <p class="info-text" style="margin-top: 8px;">📊 <span id="previewCount" style="font-weight: 700; color: #8b5cf6;">0</span> códigos encontrados en total</p>
-                </div>
-                
-                <div class="info-box">
-                    <strong>💡 Formatos soportados:</strong>
-                    <ul>
-                        <li><strong>TXT simple:</strong> Un código por línea</li>
-                        <li><strong>TXT/CSV delimitado:</strong> Columnas separadas por comas o tabulaciones</li>
-                        <li><strong>Excel (.xlsx):</strong> Hojas con múltiples columnas</li>
-                    </ul>
-                </div>
-                
-                <label>O ingresa códigos manualmente (uno por línea):</label>
-                <textarea id="manualInput" placeholder="Ejemplo:&#10;7501234567890&#10;7501234567891&#10;7501234567892"></textarea>
+                <p id="fileName" class="info-text" style="margin-top:8px;font-weight:600"></p>
             </div>
 
+            <div id="excelOptions" class="hidden excel-options">
+                <div style="margin-bottom:13px">
+                    <label style="display:flex;align-items:center;cursor:pointer;font-size:.93em">
+                        <input type="checkbox" id="hasHeaderCheckbox" checked style="margin-right:8px;width:17px;height:17px;cursor:pointer">
+                        <span>La primera fila contiene encabezados/títulos</span>
+                    </label>
+                </div>
+                <div style="margin-bottom:16px">
+                    <label style="font-weight:700;color:#764ba2;margin-bottom:10px;display:block">📊 Selecciona las columnas de códigos (máx. 3):</label>
+                    <div style="display:grid;gap:12px">
+                        <div><label style="font-size:.88em;color:#6b7280;margin-bottom:4px;display:block">Columna 1:</label><select id="columnSelect1" style="width:100%;padding:11px;border:2px solid #e5e7eb;border-radius:10px;font-size:14px"><option value="">No seleccionada</option></select></div>
+                        <div><label style="font-size:.88em;color:#6b7280;margin-bottom:4px;display:block">Columna 2 (opcional):</label><select id="columnSelect2" style="width:100%;padding:11px;border:2px solid #e5e7eb;border-radius:10px;font-size:14px"><option value="">No seleccionada</option></select></div>
+                        <div><label style="font-size:.88em;color:#6b7280;margin-bottom:4px;display:block">Columna 3 (opcional):</label><select id="columnSelect3" style="width:100%;padding:11px;border:2px solid #e5e7eb;border-radius:10px;font-size:14px"><option value="">No seleccionada</option></select></div>
+                    </div>
+                </div>
+                <div id="previewSection" class="hidden" style="margin-top:12px;padding:13px;background:#f9fafb;border-radius:10px;border:1px solid #e5e7eb">
+                    <strong style="display:block;margin-bottom:8px;color:#6b7280;font-size:.87em">📋 Vista previa (primeros 3 registros):</strong>
+                    <div id="previewList" style="font-family:'Courier New',monospace;font-size:.83em;color:#374151;line-height:1.8"></div>
+                </div>
+                <p class="info-text" style="margin-top:6px">📊 <span id="previewCount" style="font-weight:700;color:#8b5cf6">0</span> códigos encontrados en total</p>
+            </div>
+
+            <div class="info-box">
+                <strong>💡 Formatos soportados:</strong>
+                <ul>
+                    <li><strong>TXT simple:</strong> Un código por línea</li>
+                    <li><strong>TXT/CSV delimitado:</strong> Columnas separadas por comas o tabulaciones</li>
+                    <li><strong>Excel (.xlsx):</strong> Hojas con múltiples columnas</li>
+                </ul>
+            </div>
+            <label style="display:block;margin-bottom:7px;font-weight:600;color:#1f2937;font-size:.93em">O ingresa códigos manualmente (uno por línea):</label>
+            <textarea id="manualInput" placeholder="Ejemplo:&#10;7501234567890&#10;7501234567891&#10;7501234567892"></textarea>
+        </div>
+
+        <!-- Opciones principales -->
+        <div class="options-grid">
+            <div class="form-group">
+                <label>🔢 Cantidad de códigos a usar:</label>
+                <input type="number" id="codeLimit" value="50" min="1" max="10000">
+                <p class="info-text">Límite: 1 a 10,000</p>
+            </div>
+            <div class="form-group">
+                <label>📱 Modo de visualización:</label>
+                <select id="displayMode">
+                    <option value="barcode">Código de Barras</option>
+                    <option value="number">Código Numérico</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>🔀 Orden de presentación:</label>
+                <select id="orderMode">
+                    <option value="sequential">Secuencial</option>
+                    <option value="random">Aleatorio</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>🎯 Modo de práctica:</label>
+                <select id="practiceMode">
+                    <option value="timed">Con tiempo límite</option>
+                    <option value="manual">Avance manual</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>📊 Cantidad mínima:</label>
+                <input type="number" id="minQuantity" value="1" min="1" max="9999">
+            </div>
+            <div class="form-group">
+                <label>📈 Cantidad máxima:</label>
+                <input type="number" id="maxQuantity" value="20" min="1" max="9999">
+            </div>
+            <div class="form-group">
+                <label>🔢 Paridad de cantidad:</label>
+                <select id="quantityParity">
+                    <option value="any">Al azar (cualquier número)</option>
+                    <option value="even">Solo pares (2, 4, 6…)</option>
+                    <option value="odd">Solo impares (1, 3, 5…)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Tiempo -->
+        <div class="section-title">⏱️ Configuración de Tiempo</div>
+        <div class="toggle-row">
+            <div class="tr-label">🎲 Tiempo aleatorio por código <small>El tiempo varía según la cantidad del código</small></div>
+            <label class="switch"><input type="checkbox" id="randomTimeToggle" onchange="toggleRandomTime()"><span class="slider"></span></label>
+        </div>
+        <div id="fixedTimeGroup" class="form-group">
+            <label>⏱️ Tiempo fijo por código (segundos):</label>
+            <input type="number" id="timePerCode" value="10" min="3" max="120">
+        </div>
+        <div id="randomTimeGroup" class="hidden">
+            <div class="options-grid">
+                <div class="form-group"><label>⏱️ Tiempo mínimo (seg):</label><input type="number" id="timeMin" value="5" min="3" max="60"><p class="info-text">Para cantidades pequeñas</p></div>
+                <div class="form-group"><label>⏱️ Tiempo máximo (seg):</label><input type="number" id="timeMax" value="20" min="5" max="120"><p class="info-text">Para cantidades grandes</p></div>
+            </div>
+            <div class="time-info-badge">🔄 Tiempo escala proporcionalmente con la cantidad</div>
+        </div>
+
+        <!-- Área -->
+        <div class="section-title">🏭 Código de Área (Pantalla previa)</div>
+        <div class="toggle-row">
+            <div class="tr-label">🏷️ Mostrar código de Área antes de iniciar <small>Se muestra por X segundos antes de la primera pregunta</small></div>
+            <label class="switch"><input type="checkbox" id="areaToggle" onchange="toggleAreaConfig()"><span class="slider"></span></label>
+        </div>
+        <div id="areaConfig" class="hidden">
             <div class="options-grid">
                 <div class="form-group">
-                    <label>🔢 Cantidad de códigos a usar:</label>
-                    <input type="number" id="codeLimit" value="50" min="1" max="10000">
-                    <p class="info-text">Límite: 1 a 10,000 códigos</p>
+                    <label>🏭 Código de Área (3100–5500):</label>
+                    <input type="number" id="areaCode" value="3100" min="3100" max="5500">
+                    <p class="info-text">Rango: 3100 a 5500</p>
                 </div>
-
                 <div class="form-group">
-                    <label>📱 Modo de visualización:</label>
-                    <select id="displayMode">
-                        <option value="barcode">Código de Barras</option>
-                        <option value="number">Código Numérico</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>🔀 Orden de presentación:</label>
-                    <select id="orderMode">
-                        <option value="sequential">Secuencial</option>
-                        <option value="random">Aleatorio</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>⏱️ Tiempo por código (segundos):</label>
-                    <input type="number" id="timePerCode" value="10" min="5" max="60">
-                </div>
-
-                <div class="form-group">
-                    <label>🎯 Modo de práctica:</label>
-                    <select id="practiceMode">
-                        <option value="timed">Con tiempo límite</option>
-                        <option value="manual">Avance manual</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>📊 Cantidad mínima:</label>
-                    <input type="number" id="minQuantity" value="1" min="1" max="9999">
-                </div>
-
-                <div class="form-group">
-                    <label>📈 Cantidad máxima:</label>
-                    <input type="number" id="maxQuantity" value="100" min="1" max="9999">
+                    <label>⏳ Tiempo de pantalla (seg):</label>
+                    <input type="number" id="areaTime" value="5" min="1" max="30">
+                    <p class="info-text">Por defecto: 5 segundos</p>
                 </div>
             </div>
-            
-            <div class="options-grid" style="grid-template-columns: 1fr;"></div>
-
-            <div style="margin-top: 20px;">
-                <button class="btn" onclick="startPractice()">🚀 Comenzar Práctica</button>
+            <div class="form-group">
+                <label>📱 Visualización del Área:</label>
+                <select id="areaDisplayMode">
+                    <option value="barcode">Código de Barras</option>
+                    <option value="number">Código Numérico</option>
+                </select>
+            </div>
+            <div class="toggle-row">
+                <div class="tr-label">🎲 Código de Área aleatorio <small>Genera un código al azar entre 3100 y 5500</small></div>
+                <label class="switch"><input type="checkbox" id="areaRandomToggle" onchange="toggleAreaRandom()"><span class="slider"></span></label>
             </div>
         </div>
 
-        <!-- Panel de Práctica -->
-        <div id="practicePanel" class="practice-panel hidden">
-            <div class="progress-bar">
-                <div id="progressFill" class="progress-fill" style="width: 0%"></div>
-            </div>
-            <div style="font-size: 0.85em; color: #6b7280; font-weight: 600; text-align: center; margin-top: 5px;">
-                <span id="progressPercentage">0%</span> completado
-            </div>
-
-            <div class="counter">
-                <span>Código <span id="currentIndex" class="stat-badge">1</span> de <span id="totalCodes" class="stat-badge">0</span></span>
-            </div>
-
-            <div id="timerDisplay" class="timer"></div>
-
-            <div class="practice-display">
-                <div id="codeDisplay" class="code-display">
-                    <!-- Aquí se mostrará el código -->
-                </div>
-
-                <div class="quantity-input-section">
-                    <label style="display: block;">Cantidad a digitar:</label>
-                    <div class="quantity-display" id="quantityDisplay">0</div>
-                    <div style="margin-top: 8px;">
-                        <button class="btn" onclick="nextCode()" style="width: auto; padding: 10px 28px; font-size: 14px;">✓ Siguiente <span style="opacity: 0.7; font-size: 0.85em;">(Enter)</span></button>
-                    </div>
-                </div>
-            </div>
-
-            <div style="margin-top: 5px; flex-shrink: 0;">
-                <button class="btn btn-secondary" onclick="cancelPractice()">❌ Cancelar</button>
+        <!-- Imágenes -->
+        <div class="section-title">🖼️ Imágenes de Productos</div>
+        <div class="toggle-row">
+            <div class="tr-label">📸 Mostrar imagen del producto junto al código <small>Muestra una imagen de referencia del artículo a la par del código (una imagen por código)</small></div>
+            <label class="switch"><input type="checkbox" id="imagesToggle" onchange="toggleImagesConfig()"><span class="slider"></span></label>
+        </div>
+        <div id="imagesConfig" class="hidden" style="padding:0;margin-bottom:10px">
+            <div class="toggle-row" style="margin-bottom:0">
+                <div class="tr-label">🔒 Modo "Contar productos" (ocultar cantidad) <small>Se muestra la imagen con la cantidad en badge — el practicante ve el producto y la cantidad como referencia visual</small></div>
+                <label class="switch"><input type="checkbox" id="hideQtyToggle"><span class="slider"></span></label>
             </div>
         </div>
 
-        <!-- Panel de Resultados -->
-        <div id="resultsPanel" class="results-panel hidden">
-            <h2>📊 Resultados de la Práctica</h2>
-            
-            <table class="results-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Código</th>
-                        <th>Cantidad</th>
-                    </tr>
-                </thead>
-                <tbody id="resultsTableBody">
-                </tbody>
-            </table>
-
-            <div class="total-section">
-                <div>Total General:</div>
-                <div style="font-size: 1.5em; margin-top: 10px;" id="totalQuantity">0</div>
-            </div>
-
-            <div style="margin-top: 25px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                    <button class="btn" onclick="exportToExcel()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">📊 Exportar a Excel</button>
-                    <button class="btn" onclick="resetApp()">🔄 Nueva Práctica</button>
-                </div>
-            </div>
+        <div style="margin-top:18px">
+            <button class="btn" onclick="startPractice()">🚀 Comenzar Práctica</button>
         </div>
     </div>
 
-    <script>
-        let codes = [];
-        let currentCodeIndex = 0;
-        let currentQuantity = 0;
-        let results = [];
-        let timer = null;
-        let timeRemaining = 0;
-        let excelData = null;
-        let allExcelCodes = [];
-        let selectedColumns = []; // Array de objetos {index, name}
-        let columnNames = []; // Nombres de las columnas seleccionadas
+    <!-- ============================== ÁREA ============================== -->
+    <div id="areaPanel" class="area-panel hidden">
+        <div class="area-code-display">
+            <div class="area-label">📦 Área de Inventario</div>
+            <div id="areaContentDisplay"></div>
+            <div class="area-countdown">Comenzando en <span id="areaCountdown">5</span></div>
+        </div>
+    </div>
 
-        // Manejo de archivos
-        const fileInput = document.getElementById('fileInput');
-        fileInput.addEventListener('change', handleFileUpload);
+    <!-- ============================== PRÁCTICA ============================== -->
+    <div id="practicePanel" class="practice-panel hidden">
+        <div class="progress-bar"><div id="progressFill" class="progress-fill" style="width:0%"></div></div>
+        <div style="font-size:.82em;color:#6b7280;font-weight:600;text-align:center;margin-bottom:4px"><span id="progressPercentage">0%</span> completado</div>
+        <div class="counter">Código <span id="currentIndex" class="stat-badge">1</span> de <span id="totalCodes" class="stat-badge">0</span></div>
+        <div id="timerDisplay" class="timer"></div>
 
-        // Drag and drop
-        const fileUpload = document.querySelector('.file-upload');
-        fileUpload.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            fileUpload.style.backgroundColor = 'rgba(139, 92, 246, 0.15)';
-        });
+        <!-- Main area: code LEFT, product shelf RIGHT -->
+        <div class="practice-main">
 
-        fileUpload.addEventListener('dragleave', () => {
-            fileUpload.style.backgroundColor = '';
-        });
+            <!-- LEFT: barcode + quantity -->
+            <div class="practice-left">
+                <div id="codeDisplay" class="code-display"></div>
+                <div class="quantity-section">
+                    <label style="display:block;font-size:.82em;margin-bottom:5px;color:#4b5563;font-weight:600" id="qtyLabel">Cantidad a digitar:</label>
+                    <div class="quantity-display" id="quantityDisplay">0</div>
+                    <div class="quantity-mystery hidden" id="quantityMystery">? ? ?</div>
+                </div>
+                <div style="margin-top:8px">
+                    <button class="btn" onclick="nextCode()" style="width:auto;padding:9px 24px;font-size:14px">✓ Siguiente <span style="opacity:.7;font-size:.82em">(Enter)</span></button>
+                </div>
+            </div>
 
-        fileUpload.addEventListener('drop', (e) => {
-            e.preventDefault();
-            fileUpload.style.backgroundColor = '';
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                fileInput.files = files;
-                handleFileUpload({ target: { files: files } });
-            }
-        });
+            <!-- RIGHT: product shelf (N copies of same SVG product, row by row) -->
+            <div class="product-shelf shelf-hidden" id="productShelf">
+                <div class="shelf-grid" id="shelfGrid"></div>
+            </div>
 
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+        </div>
 
-            document.getElementById('fileName').textContent = `✅ Archivo cargado: ${file.name}`;
+        <div style="margin-top:6px;flex-shrink:0">
+            <button class="btn btn-secondary" onclick="cancelPractice()">❌ Cancelar</button>
+        </div>
+    </div>
 
-            const reader = new FileReader();
-            
-            if (file.name.endsWith('.txt')) {
-                reader.onload = (e) => {
-                    const content = e.target.result;
-                    
-                    // Detectar si es delimitado (coma o tabulación) o simple lista
-                    const lines = content.split('\n').filter(line => line.trim() !== '');
-                    
-                    if (lines.length > 0) {
-                        // Verificar si la primera línea tiene delimitadores
-                        const firstLine = lines[0];
-                        const hasComma = firstLine.includes(',');
-                        const hasTab = firstLine.includes('\t');
-                        
-                        if (hasComma || hasTab) {
-                            // Es un archivo delimitado, procesar como CSV/TSV
-                            const delimiter = hasComma ? ',' : '\t';
-                            const parsedData = lines.map(line => line.split(delimiter).map(cell => cell.trim()));
-                            
-                            excelData = parsedData;
-                            
-                            // Detectar si la primera fila es header
-                            const hasHeader = detectHeader(parsedData[0]);
-                            
-                            // Configurar checkbox
-                            const headerCheckbox = document.getElementById('hasHeaderCheckbox');
-                            headerCheckbox.checked = hasHeader;
-                            
-                            // Actualizar selector de columnas
-                            updateColumnSelector();
-                            
-                            document.getElementById('excelOptions').classList.remove('hidden');
-                            
-                            // Agregar listeners a los 3 selectores
-                            for (let i = 1; i <= 3; i++) {
-                                const columnSelect = document.getElementById(`columnSelect${i}`);
-                                const newColumnSelect = columnSelect.cloneNode(true);
-                                columnSelect.parentNode.replaceChild(newColumnSelect, columnSelect);
-                                newColumnSelect.addEventListener('change', updateExcelPreview);
-                            }
-                            
-                            const newCheckbox = headerCheckbox.cloneNode(true);
-                            headerCheckbox.parentNode.replaceChild(newCheckbox, headerCheckbox);
-                            newCheckbox.addEventListener('change', () => {
-                                updateColumnSelector();
-                                updateExcelPreview();
-                            });
-                            
-                            // Limpiar el textarea
-                            document.getElementById('manualInput').value = '';
-                        } else {
-                            // Es una lista simple, una por línea
-                            document.getElementById('manualInput').value = content;
-                            document.getElementById('excelOptions').classList.add('hidden');
-                            excelData = null;
-                            allExcelCodes = [];
-                        }
-                    }
-                };
-                reader.readAsText(file);
-            } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-                reader.onload = (e) => {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    excelData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-                    
-                    // Mostrar opciones de columna
-                    if (excelData.length > 0) {
-                        const hasHeader = detectHeader(excelData[0]);
-                        
-                        // Configurar checkbox
-                        const headerCheckbox = document.getElementById('hasHeaderCheckbox');
-                        headerCheckbox.checked = hasHeader;
-                        
-                        // Actualizar selector de columnas
-                        updateColumnSelector();
-                        
-                        document.getElementById('excelOptions').classList.remove('hidden');
-                        
-                        // Agregar listeners a los 3 selectores
-                        for (let i = 1; i <= 3; i++) {
-                            const columnSelect = document.getElementById(`columnSelect${i}`);
-                            const newColumnSelect = columnSelect.cloneNode(true);
-                            columnSelect.parentNode.replaceChild(newColumnSelect, columnSelect);
-                            newColumnSelect.addEventListener('change', updateExcelPreview);
-                        }
-                        
-                        const newCheckbox = headerCheckbox.cloneNode(true);
-                        headerCheckbox.parentNode.replaceChild(newCheckbox, headerCheckbox);
-                        newCheckbox.addEventListener('change', () => {
-                            updateColumnSelector();
-                            updateExcelPreview();
-                        });
-                        
-                        // Limpiar el textarea
-                        document.getElementById('manualInput').value = '';
-                    }
-                };
-                reader.readAsArrayBuffer(file);
-            }
-        }
+    <!-- ============================== RESULTADOS ============================== -->
+    <div id="resultsPanel" class="results-panel hidden">
+        <h2>📊 Resultados de la Práctica</h2>
+        <table class="results-table">
+            <thead><tr><th>#</th><th>Código</th><th>Cantidad</th></tr></thead>
+            <tbody id="resultsTableBody"></tbody>
+        </table>
+        <div class="total-section">
+            <div>Total General:</div>
+            <div style="font-size:1.5em;margin-top:8px" id="totalQuantity">0</div>
+        </div>
+        <div style="margin-top:20px">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+                <button class="btn btn-success" onclick="exportToExcel()">📊 Excel</button>
+                <button class="btn" onclick="repeatPractice()" style="background:linear-gradient(135deg,#8b5cf6,#d946ef)">🔁 Repetir</button>
+                <button class="btn btn-secondary" onclick="resetApp()">🏠 Inicio</button>
+            </div>
+        </div>
+    </div>
+</div>
 
-        function updateColumnSelector() {
-            if (!excelData || excelData.length === 0) return;
-            
-            const hasHeader = document.getElementById('hasHeaderCheckbox').checked;
-            const firstRow = excelData[0];
-            const numColumns = firstRow.length;
-            
-            // Poblar los 3 selectores
-            for (let selectNum = 1; selectNum <= 3; selectNum++) {
-                const columnSelect = document.getElementById(`columnSelect${selectNum}`);
-                columnSelect.innerHTML = '<option value="">No seleccionada</option>';
-                
-                for (let i = 0; i < numColumns; i++) {
-                    const option = document.createElement('option');
-                    option.value = i;
-                    
-                    if (hasHeader) {
-                        // Mostrar el nombre del header
-                        option.textContent = firstRow[i] || `Columna ${i + 1}`;
-                        option.dataset.columnName = firstRow[i] || `Columna ${i + 1}`;
-                    } else {
-                        // Mostrar número de columna y una muestra del primer dato
-                        const sampleData = firstRow[i] ? ` (ej: ${firstRow[i]})` : '';
-                        option.textContent = `Columna ${i + 1}${sampleData}`;
-                        option.dataset.columnName = `Columna ${i + 1}`;
-                    }
-                    
-                    columnSelect.appendChild(option);
-                }
-            }
-        }
+<!-- TOAST NOTIFICATION -->
+<div id="toast" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1f2937;color:white;padding:10px 22px;border-radius:30px;font-weight:600;font-size:.88em;z-index:9999;transition:transform .35s;pointer-events:none;opacity:0"></div>
 
-        function detectHeader(row) {
-            // Detectar si la primera fila es header
-            // Si más del 50% de las celdas son texto no numérico, es probable que sea header
-            if (!row || row.length === 0) return false;
-            
-            let nonNumericCount = 0;
-            let validCells = 0;
-            
-            row.forEach(cell => {
-                if (cell && cell.toString().trim() !== '') {
-                    validCells++;
-                    const cellStr = cell.toString().trim();
-                    // Si no es un número puro o si tiene letras, cuenta como texto
-                    if (isNaN(cellStr) || /[a-zA-Z]/.test(cellStr)) {
-                        nonNumericCount++;
-                    }
-                }
-            });
-            
-            // Si más del 50% son no numéricos, probablemente es header
-            return validCells > 0 && (nonNumericCount / validCells) > 0.5;
-        }
+<script>
+// ================================================================
+//  STATE
+// ================================================================
+let codes=[], currentCodeIndex=0, currentQuantity=0, results=[], timer=null, timeRemaining=0;
+let excelData=null, allExcelCodes=[], selectedColumns=[], columnNames=[];
+let savedConfig=null, areaCountdownTimer=null;
 
-        function updateExcelPreview() {
-            // Recoger todas las columnas seleccionadas
-            selectedColumns = [];
-            columnNames = [];
-            
-            for (let i = 1; i <= 3; i++) {
-                const select = document.getElementById(`columnSelect${i}`);
-                const columnIndex = parseInt(select.value);
-                
-                if (!isNaN(columnIndex) && excelData) {
-                    const selectedOption = select.options[select.selectedIndex];
-                    const columnName = selectedOption.dataset.columnName || `Columna ${i}`;
-                    
-                    selectedColumns.push({
-                        index: columnIndex,
-                        name: columnName
-                    });
-                    columnNames.push(columnName);
-                }
-            }
-            
-            if (selectedColumns.length === 0 || !excelData) {
-                document.getElementById('previewCount').textContent = '0';
-                document.getElementById('previewSection').classList.add('hidden');
-                allExcelCodes = [];
-                return;
-            }
-            
-            // Usar el checkbox para determinar si hay header
-            const hasHeader = document.getElementById('hasHeaderCheckbox').checked;
-            const startRow = hasHeader ? 1 : 0;
-            
-            // Extraer códigos de todas las columnas seleccionadas
-            // Cada fila tendrá un array de códigos (uno por cada columna seleccionada)
-            allExcelCodes = [];
-            
-            for (let rowIndex = startRow; rowIndex < excelData.length; rowIndex++) {
-                const row = excelData[rowIndex];
-                const rowCodes = [];
-                let hasValidCode = false;
-                
-                selectedColumns.forEach(col => {
-                    const cellValue = row[col.index];
-                    if (cellValue && cellValue.toString().trim() !== '') {
-                        rowCodes.push({
-                            code: cellValue.toString().trim(),
-                            columnName: col.name
-                        });
-                        hasValidCode = true;
-                    }
-                });
-                
-                if (hasValidCode && rowCodes.length > 0) {
-                    allExcelCodes.push(rowCodes);
-                }
-            }
-            
-            document.getElementById('previewCount').textContent = allExcelCodes.length;
-            
-            // Mostrar vista previa de los primeros 3 registros
-            if (allExcelCodes.length > 0) {
-                const previewList = document.getElementById('previewList');
-                const previewItems = allExcelCodes.slice(0, 3);
-                
-                const previewHTML = previewItems.map((rowCodes, idx) => {
-                    const codesHTML = rowCodes.map(item => 
-                        `<div style="margin-left: 20px; padding: 4px 0;">
-                            <span style="color: #8b5cf6; font-weight: 600;">${item.columnName}:</span> 
-                            <span style="color: #1f2937; font-weight: 700;">${item.code}</span>
-                        </div>`
-                    ).join('');
-                    
-                    return `<div style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; margin-bottom: 8px;">
-                        <div style="color: #9ca3af; font-weight: 600; margin-bottom: 4px;">Registro ${idx + 1}:</div>
-                        ${codesHTML}
-                    </div>`;
-                }).join('');
-                
-                previewList.innerHTML = previewHTML;
-                
-                if (allExcelCodes.length > 3) {
-                    previewList.innerHTML += `<div style="padding: 8px 0; color: #6b7280; font-style: italic;">... y ${allExcelCodes.length - 3} registros más</div>`;
-                }
-                
-                document.getElementById('previewSection').classList.remove('hidden');
-            } else {
-                document.getElementById('previewSection').classList.add('hidden');
-            }
-            
-            // Actualizar el límite máximo
-            const limitInput = document.getElementById('codeLimit');
-            if (allExcelCodes.length < parseInt(limitInput.value)) {
-                limitInput.value = allExcelCodes.length;
-            }
-            limitInput.max = allExcelCodes.length;
-        }
+// ================================================================
+//  FILE HANDLING
+// ================================================================
+document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+const fileUploadEl = document.querySelector('.file-upload');
+fileUploadEl.addEventListener('dragover', e=>{e.preventDefault();fileUploadEl.style.backgroundColor='rgba(139,92,246,.15)'});
+fileUploadEl.addEventListener('dragleave', ()=>{fileUploadEl.style.backgroundColor=''});
+fileUploadEl.addEventListener('drop', e=>{
+    e.preventDefault(); fileUploadEl.style.backgroundColor='';
+    const files=e.dataTransfer.files;
+    if(files.length>0){document.getElementById('fileInput').files=files;handleFileUpload({target:{files}})}
+});
 
-        function startPractice() {
-            let inputCodes = [];
-            
-            // Verificar si hay datos de Excel con columna seleccionada
-            if (allExcelCodes.length > 0) {
-                inputCodes = [...allExcelCodes];
-            } else {
-                // Usar input manual
-                const manualInput = document.getElementById('manualInput').value.trim();
-                
-                if (!manualInput) {
-                    alert('Por favor, ingresa o carga códigos de barras antes de comenzar.');
-                    return;
-                }
-                
-                inputCodes = manualInput.split('\n').filter(code => code.trim() !== '').map(code => code.trim());
-            }
-            
-            if (inputCodes.length === 0) {
-                alert('No se encontraron códigos válidos.');
-                return;
-            }
-
-            // Aplicar límite de códigos
-            const codeLimit = parseInt(document.getElementById('codeLimit').value);
-            if (codeLimit < inputCodes.length) {
-                inputCodes = inputCodes.slice(0, codeLimit);
-            }
-
-            // Aplicar orden
-            const orderMode = document.getElementById('orderMode').value;
-            if (orderMode === 'random') {
-                codes = shuffleArray([...inputCodes]);
-            } else {
-                codes = inputCodes;
-            }
-
-            currentCodeIndex = 0;
-            results = [];
-
-            document.getElementById('setupPanel').classList.add('hidden');
-            document.getElementById('practicePanel').classList.remove('hidden');
-            document.getElementById('totalCodes').textContent = codes.length;
-
-            showCurrentCode();
-        }
-
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
-
-        function showCurrentCode() {
-            if (currentCodeIndex >= codes.length) {
-                finishPractice();
-                return;
-            }
-
-            const currentCodes = codes[currentCodeIndex]; // Ahora es un array de objetos {code, columnName}
-            const displayMode = document.getElementById('displayMode').value;
-            const codeDisplay = document.getElementById('codeDisplay');
-            
-            document.getElementById('currentIndex').textContent = currentCodeIndex + 1;
-
-            // Generar cantidad aleatoria
-            const minQty = parseInt(document.getElementById('minQuantity').value);
-            const maxQty = parseInt(document.getElementById('maxQuantity').value);
-            const randomQuantity = Math.floor(Math.random() * (maxQty - minQty + 1)) + minQty;
-            document.getElementById('quantityDisplay').textContent = randomQuantity;
-            
-            currentQuantity = randomQuantity;
-
-            const progress = ((currentCodeIndex + 1) / codes.length) * 100;
-            document.getElementById('progressFill').style.width = progress + '%';
-            document.getElementById('progressPercentage').textContent = Math.round(progress) + '%';
-
-            // Verificar si es un array de códigos o un código simple
-            const isMultiColumn = Array.isArray(currentCodes);
-            
-            if (isMultiColumn) {
-                // Mostrar múltiples códigos en grid horizontal
-                const numCodes = currentCodes.length;
-                const gridCols = numCodes === 1 ? '1fr' : numCodes === 2 ? '1fr 1fr' : '1fr 1fr 1fr';
-                
-                let html = `<div style="display: grid; 
-                                       grid-template-columns: ${gridCols}; 
-                                       gap: ${numCodes === 3 ? '8px' : '12px'}; 
-                                       width: 100%; 
-                                       max-width: 100%; 
-                                       margin: 0 auto; 
-                                       padding: 0 4px;">`;
-                
-                currentCodes.forEach((item, index) => {
-                    const cardPadding = numCodes === 3 ? '10px' : (numCodes === 2 ? '12px' : '16px');
-                    const minHeight = numCodes === 3 ? '140px' : (numCodes === 2 ? '150px' : '160px');
-                    const labelFontSize = numCodes === 3 ? '0.75em' : '0.85em';
-                    const labelPadding = numCodes === 3 ? '4px 8px' : '6px 12px';
-                    
-                    if (displayMode === 'barcode') {
-                        html += `
-                        <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(217, 70, 239, 0.05) 100%); 
-                                    padding: ${cardPadding}; 
-                                    border-radius: 10px; 
-                                    border: 2px solid rgba(139, 92, 246, 0.2);
-                                    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
-                                    display: flex;
-                                    flex-direction: column;
-                                    align-items: center;
-                                    justify-content: center;
-                                    min-height: ${minHeight};
-                                    overflow: hidden;">
-                            <div style="font-size: ${labelFontSize}; 
-                                        color: #8b5cf6; 
-                                        font-weight: 700; 
-                                        margin-bottom: 8px; 
-                                        text-transform: uppercase;
-                                        letter-spacing: 0.3px;
-                                        text-align: center;
-                                        padding: ${labelPadding};
-                                        background: rgba(139, 92, 246, 0.1);
-                                        border-radius: 5px;
-                                        white-space: nowrap;
-                                        overflow: hidden;
-                                        text-overflow: ellipsis;
-                                        max-width: 100%;">
-                                ${item.columnName}
-                            </div>
-                            <div style="flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; overflow: hidden;">
-                                <svg id="barcodeCanvas${index}" style="max-width: 100%; height: auto;"></svg>
-                            </div>
-                        </div>`;
-                    } else {
-                        html += `
-                        <div style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(217, 70, 239, 0.05) 100%); 
-                                    padding: ${cardPadding}; 
-                                    border-radius: 10px; 
-                                    border: 2px solid rgba(139, 92, 246, 0.2);
-                                    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
-                                    display: flex;
-                                    flex-direction: column;
-                                    align-items: center;
-                                    justify-content: center;
-                                    min-height: ${minHeight};
-                                    overflow: hidden;">
-                            <div style="font-size: ${labelFontSize}; 
-                                        color: #8b5cf6; 
-                                        font-weight: 700; 
-                                        margin-bottom: 8px; 
-                                        text-transform: uppercase;
-                                        letter-spacing: 0.3px;
-                                        text-align: center;
-                                        padding: ${labelPadding};
-                                        background: rgba(139, 92, 246, 0.1);
-                                        border-radius: 5px;
-                                        white-space: nowrap;
-                                        overflow: hidden;
-                                        text-overflow: ellipsis;
-                                        max-width: 100%;">
-                                ${item.columnName}
-                            </div>
-                            <div style="flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; width: 100%;">
-                                <div class="code-number" style="font-size: ${numCodes === 1 ? '2em' : numCodes === 2 ? '1.4em' : '1.1em'}; 
-                                                                padding: ${numCodes === 3 ? '8px 10px' : '10px 14px'}; 
-                                                                margin: 0;
-                                                                word-break: break-all;
-                                                                max-width: 100%;
-                                                                line-height: 1.2;">
-                                    ${item.code}
-                                </div>
-                            </div>
-                        </div>`;
-                    }
-                });
-                
-                html += '</div>';
-                codeDisplay.innerHTML = html;
-                
-                // Generar códigos de barras si es necesario
-                if (displayMode === 'barcode') {
-                    currentCodes.forEach((item, index) => {
-                        try {
-                            const isMobile = window.innerWidth <= 768;
-                            const isSmall = window.innerWidth <= 480;
-                            
-                            // Ajustar tamaño según cantidad de códigos y pantalla
-                            let barcodeWidth, barcodeHeight, fontSize;
-                            
-                            if (numCodes === 1) {
-                                barcodeWidth = isSmall ? 1 : (isMobile ? 1.3 : 1.8);
-                                barcodeHeight = isSmall ? 55 : (isMobile ? 65 : 80);
-                                fontSize = isSmall ? 13 : (isMobile ? 15 : 17);
-                            } else if (numCodes === 2) {
-                                barcodeWidth = isSmall ? 0.8 : (isMobile ? 1 : 1.2);
-                                barcodeHeight = isSmall ? 45 : (isMobile ? 55 : 65);
-                                fontSize = isSmall ? 11 : (isMobile ? 13 : 15);
-                            } else {
-                                barcodeWidth = isSmall ? 0.6 : (isMobile ? 0.75 : 0.9);
-                                barcodeHeight = isSmall ? 40 : (isMobile ? 45 : 55);
-                                fontSize = isSmall ? 9 : (isMobile ? 11 : 12);
-                            }
-                            
-                            JsBarcode(`#barcodeCanvas${index}`, item.code, {
-                                format: "CODE128",
-                                width: barcodeWidth,
-                                height: barcodeHeight,
-                                displayValue: true,
-                                fontSize: fontSize,
-                                margin: 3
-                            });
-                        } catch (error) {
-                            const canvas = document.getElementById(`barcodeCanvas${index}`);
-                            if (canvas) {
-                                canvas.outerHTML = `<div class="code-number" style="font-size: 1em; padding: 6px; margin: 0;">${item.code}</div>`;
-                            }
-                        }
-                    });
-                }
-            } else {
-                // Código simple (retrocompatibilidad)
-                if (displayMode === 'barcode') {
-                    codeDisplay.innerHTML = '<svg id="barcodeCanvas"></svg>';
-                    try {
-                        const isMobile = window.innerWidth <= 768;
-                        const isSmall = window.innerWidth <= 480;
-                        const barcodeHeight = isSmall ? 60 : (isMobile ? 70 : 90);
-                        const barcodeWidth = isSmall ? 1.2 : (isMobile ? 1.5 : 2);
-                        
-                        JsBarcode("#barcodeCanvas", currentCodes, {
-                            format: "CODE128",
-                            width: barcodeWidth,
-                            height: barcodeHeight,
-                            displayValue: true,
-                            fontSize: isSmall ? 14 : (isMobile ? 16 : 18),
-                            margin: 5
-                        });
-                    } catch (error) {
-                        codeDisplay.innerHTML = `<div class="code-number">${currentCodes}</div>`;
-                    }
+function handleFileUpload(event){
+    const file=event.target.files[0]; if(!file) return;
+    document.getElementById('fileName').textContent=`✅ Archivo cargado: ${file.name}`;
+    const reader=new FileReader();
+    if(file.name.match(/\.(txt|csv)$/i)){
+        reader.onload=e=>{
+            const lines=e.target.result.split('\n').filter(l=>l.trim()!=='');
+            if(lines.length>0){
+                const first=lines[0]; const hasComma=first.includes(','), hasTab=first.includes('\t');
+                if(hasComma||hasTab){
+                    const delim=hasComma?',':'\t';
+                    excelData=lines.map(l=>l.split(delim).map(c=>c.trim()));
+                    document.getElementById('hasHeaderCheckbox').checked=detectHeader(excelData[0]);
+                    updateColumnSelector(); document.getElementById('excelOptions').classList.remove('hidden');
+                    bindColumnListeners(); document.getElementById('manualInput').value='';
                 } else {
-                    codeDisplay.innerHTML = `<div class="code-number">${currentCodes}</div>`;
+                    document.getElementById('manualInput').value=e.target.result;
+                    document.getElementById('excelOptions').classList.add('hidden');
+                    excelData=null; allExcelCodes=[];
                 }
             }
-
-            const practiceMode = document.getElementById('practiceMode').value;
-            if (practiceMode === 'timed') {
-                startTimer();
-            } else {
-                document.getElementById('timerDisplay').textContent = '';
+        }; reader.readAsText(file);
+    } else if(file.name.match(/\.xlsx?$/i)){
+        reader.onload=e=>{
+            const data=new Uint8Array(e.target.result);
+            const wb=XLSX.read(data,{type:'array'});
+            excelData=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1});
+            if(excelData.length>0){
+                document.getElementById('hasHeaderCheckbox').checked=detectHeader(excelData[0]);
+                updateColumnSelector(); document.getElementById('excelOptions').classList.remove('hidden');
+                bindColumnListeners(); document.getElementById('manualInput').value='';
             }
-        }
+        }; reader.readAsArrayBuffer(file);
+    }
+}
 
-        function startTimer() {
-            clearInterval(timer);
-            timeRemaining = parseInt(document.getElementById('timePerCode').value);
-            
-            updateTimerDisplay();
-            
-            timer = setInterval(() => {
-                timeRemaining--;
-                updateTimerDisplay();
-                
-                if (timeRemaining <= 0) {
-                    clearInterval(timer);
-                    nextCode();
-                }
-            }, 1000);
-        }
+function bindColumnListeners(){
+    for(let i=1;i<=3;i++){
+        const sel=document.getElementById(`columnSelect${i}`);
+        const ns=sel.cloneNode(true); sel.parentNode.replaceChild(ns,sel);
+        ns.addEventListener('change',updateExcelPreview);
+    }
+    const cb=document.getElementById('hasHeaderCheckbox');
+    const nc=cb.cloneNode(true); cb.parentNode.replaceChild(nc,cb);
+    nc.addEventListener('change',()=>{updateColumnSelector();updateExcelPreview()});
+}
 
-        function updateTimerDisplay() {
-            const timerDisplay = document.getElementById('timerDisplay');
-            timerDisplay.textContent = `⏱️ Tiempo restante: ${timeRemaining}s`;
-            
-            if (timeRemaining <= 5) {
-                timerDisplay.style.color = '#dc2626';
-            } else {
-                timerDisplay.style.color = '#8b5cf6';
-            }
+function updateColumnSelector(){
+    if(!excelData||excelData.length===0) return;
+    const hasH=document.getElementById('hasHeaderCheckbox').checked;
+    const first=excelData[0];
+    for(let s=1;s<=3;s++){
+        const sel=document.getElementById(`columnSelect${s}`);
+        sel.innerHTML='<option value="">No seleccionada</option>';
+        for(let i=0;i<first.length;i++){
+            const opt=document.createElement('option'); opt.value=i;
+            if(hasH){opt.textContent=first[i]||`Columna ${i+1}`;opt.dataset.columnName=first[i]||`Columna ${i+1}`}
+            else{const s2=first[i]?` (ej: ${first[i]})`:'';opt.textContent=`Columna ${i+1}${s2}`;opt.dataset.columnName=`Columna ${i+1}`}
+            sel.appendChild(opt);
         }
+    }
+}
 
-        function nextCode() {
-            clearInterval(timer);
-            
-            const currentCodes = codes[currentCodeIndex];
-            
-            // Verificar si es multicolumna o código simple
-            if (Array.isArray(currentCodes)) {
-                // Guardar todos los códigos de este registro
-                results.push({
-                    codes: currentCodes, // Array de {code, columnName}
-                    quantity: currentQuantity
+function detectHeader(row){
+    if(!row||row.length===0) return false;
+    let nn=0,v=0;
+    row.forEach(c=>{if(c&&c.toString().trim()!==''){v++;if(isNaN(c.toString().trim())||/[a-zA-Z]/.test(c.toString().trim()))nn++}});
+    return v>0&&(nn/v)>.5;
+}
+
+function updateExcelPreview(){
+    selectedColumns=[]; columnNames=[];
+    for(let i=1;i<=3;i++){
+        const sel=document.getElementById(`columnSelect${i}`); const idx=parseInt(sel.value);
+        if(!isNaN(idx)&&excelData){
+            const cn=sel.options[sel.selectedIndex].dataset.columnName||`Columna ${i}`;
+            selectedColumns.push({index:idx,name:cn}); columnNames.push(cn);
+        }
+    }
+    if(selectedColumns.length===0||!excelData){
+        document.getElementById('previewCount').textContent='0';
+        document.getElementById('previewSection').classList.add('hidden');
+        allExcelCodes=[]; return;
+    }
+    const hasH=document.getElementById('hasHeaderCheckbox').checked;
+    const startRow=hasH?1:0; allExcelCodes=[];
+    for(let r=startRow;r<excelData.length;r++){
+        const row=excelData[r]; const rc=[]; let hv=false;
+        selectedColumns.forEach(col=>{const val=row[col.index];if(val&&val.toString().trim()!==''){rc.push({code:val.toString().trim(),columnName:col.name});hv=true}});
+        if(hv) allExcelCodes.push(rc);
+    }
+    document.getElementById('previewCount').textContent=allExcelCodes.length;
+    if(allExcelCodes.length>0){
+        const pl=document.getElementById('previewList');
+        pl.innerHTML=allExcelCodes.slice(0,3).map((rc,idx)=>`<div style="padding:8px 0;border-bottom:1px solid #e5e7eb;margin-bottom:6px"><div style="color:#9ca3af;font-weight:600;margin-bottom:3px">Registro ${idx+1}:</div>${rc.map(item=>`<div style="margin-left:16px;padding:3px 0"><span style="color:#8b5cf6;font-weight:600">${item.columnName}:</span> <span style="color:#1f2937;font-weight:700">${item.code}</span></div>`).join('')}</div>`).join('');
+        if(allExcelCodes.length>3) pl.innerHTML+=`<div style="padding:6px 0;color:#6b7280;font-style:italic">... y ${allExcelCodes.length-3} registros más</div>`;
+        document.getElementById('previewSection').classList.remove('hidden');
+    } else document.getElementById('previewSection').classList.add('hidden');
+    const li=document.getElementById('codeLimit');
+    if(allExcelCodes.length<parseInt(li.value)) li.value=allExcelCodes.length;
+    li.max=allExcelCodes.length;
+}
+
+// ================================================================
+//  UI TOGGLES
+// ================================================================
+function toggleRandomTime(){
+    const on=document.getElementById('randomTimeToggle').checked;
+    document.getElementById('fixedTimeGroup').classList.toggle('hidden',on);
+    document.getElementById('randomTimeGroup').classList.toggle('hidden',!on);
+}
+function toggleAreaConfig(){
+    document.getElementById('areaConfig').classList.toggle('hidden',!document.getElementById('areaToggle').checked);
+}
+function toggleAreaRandom(){
+    const on=document.getElementById('areaRandomToggle').checked;
+    document.getElementById('areaCode').disabled=on;
+    document.getElementById('areaCode').style.opacity=on?'0.5':'1';
+}
+function toggleImagesConfig(){
+    document.getElementById('imagesConfig').classList.toggle('hidden',!document.getElementById('imagesToggle').checked);
+}
+
+// ================================================================
+//  START PRACTICE
+// ================================================================
+function startPractice(){
+    let inputCodes=[];
+    if(allExcelCodes.length>0) inputCodes=[...allExcelCodes];
+    else{
+        const manual=document.getElementById('manualInput').value.trim();
+        if(!manual){alert('Por favor, ingresa o carga códigos antes de comenzar.');return}
+        inputCodes=manual.split('\n').filter(c=>c.trim()!=='').map(c=>c.trim());
+    }
+    if(inputCodes.length===0){alert('No se encontraron códigos válidos.');return}
+    const codeLimit=parseInt(document.getElementById('codeLimit').value);
+    if(codeLimit<inputCodes.length) inputCodes=inputCodes.slice(0,codeLimit);
+    const orderMode=document.getElementById('orderMode').value;
+    codes=orderMode==='random'?shuffleArray([...inputCodes]):[...inputCodes];
+
+    const useRandTime=document.getElementById('randomTimeToggle').checked;
+    const useArea=document.getElementById('areaToggle').checked;
+    const areaRand=document.getElementById('areaRandomToggle').checked;
+    const showImages=document.getElementById('imagesToggle').checked;
+    const hideQty=showImages&&document.getElementById('hideQtyToggle').checked;
+
+    savedConfig={
+        codes:[...codes], orderMode,
+        displayMode:document.getElementById('displayMode').value,
+        practiceMode:document.getElementById('practiceMode').value,
+        minQuantity:parseInt(document.getElementById('minQuantity').value),
+        maxQuantity:parseInt(document.getElementById('maxQuantity').value),
+        quantityParity:document.getElementById('quantityParity').value,
+        useRandomTime:useRandTime,
+        timePerCode:parseInt(document.getElementById('timePerCode').value),
+        timeMin:parseInt(document.getElementById('timeMin').value),
+        timeMax:parseInt(document.getElementById('timeMax').value),
+        useArea,
+        areaCode:useArea?(areaRand?randomAreaCode():parseInt(document.getElementById('areaCode').value)):null,
+        areaTime:useArea?parseInt(document.getElementById('areaTime').value):0,
+        areaDisplayMode:document.getElementById('areaDisplayMode').value,
+        showImages, hideQty
+    };
+
+    currentCodeIndex=0; results=[];
+    document.getElementById('setupPanel').classList.add('hidden');
+    document.getElementById('resultsPanel').classList.add('hidden');
+    if(savedConfig.useArea) showAreaScreen(); else launchPractice();
+}
+
+function repeatPractice(){
+    if(!savedConfig) return;
+    codes=savedConfig.orderMode==='random'?shuffleArray([...savedConfig.codes]):[...savedConfig.codes];
+    if(savedConfig.useArea&&document.getElementById('areaRandomToggle').checked) savedConfig.areaCode=randomAreaCode();
+    currentCodeIndex=0; results=[];
+    document.getElementById('resultsPanel').classList.add('hidden');
+    if(savedConfig.useArea) showAreaScreen(); else launchPractice();
+}
+
+function randomAreaCode(){ return Math.floor(Math.random()*(5500-3100+1))+3100 }
+
+// ================================================================
+//  AREA SCREEN — barcode OR number
+// ================================================================
+function showAreaScreen(){
+    const panel=document.getElementById('areaPanel');
+    panel.classList.remove('hidden');
+    const contentEl=document.getElementById('areaContentDisplay');
+    const code=savedConfig.areaCode.toString();
+
+    if(savedConfig.areaDisplayMode==='barcode'){
+        contentEl.innerHTML='<div class="area-barcode-wrap"><svg id="areaBarcodesvg"></svg></div>';
+        setTimeout(()=>{
+            try{
+                JsBarcode('#areaBarcodesvg', code, {
+                    format:'CODE128', width:2.5, height:80,
+                    displayValue:true, fontSize:18,
+                    lineColor:'#1f2937', background:'white', margin:6
                 });
-            } else {
-                // Código simple (retrocompatibilidad)
-                results.push({
-                    code: currentCodes,
-                    quantity: currentQuantity
-                });
+            }catch(e){
+                contentEl.innerHTML=`<div class="area-number-text">${code}</div>`;
             }
+        },50);
+    } else {
+        contentEl.innerHTML=`<div class="area-number-text">${code}</div>`;
+    }
 
-            currentCodeIndex++;
-            showCurrentCode();
+    let remaining=savedConfig.areaTime;
+    document.getElementById('areaCountdown').textContent=remaining;
+    clearInterval(areaCountdownTimer);
+    areaCountdownTimer=setInterval(()=>{
+        remaining--;
+        document.getElementById('areaCountdown').textContent=remaining;
+        if(remaining<=0){
+            clearInterval(areaCountdownTimer);
+            panel.classList.add('hidden');
+            launchPractice();
+        }
+    },1000);
+}
+
+// ================================================================
+//  PRACTICE LOOP
+// ================================================================
+function launchPractice(){
+    document.getElementById('practicePanel').classList.remove('hidden');
+    document.getElementById('totalCodes').textContent=codes.length;
+    showCurrentCode();
+}
+
+function showCurrentCode(){
+    if(currentCodeIndex>=codes.length){finishPractice();return}
+    const currentCodes=codes[currentCodeIndex];
+    const cfg=savedConfig;
+    document.getElementById('currentIndex').textContent=currentCodeIndex+1;
+
+    // Generate quantity respecting parity
+    const minQ=cfg.minQuantity, maxQ=cfg.maxQuantity;
+    const qty=generateQuantity(minQ, maxQ, cfg.quantityParity);
+    currentQuantity=qty;
+
+    // Quantity display vs mystery
+    const qDisp=document.getElementById('quantityDisplay');
+    const qMyst=document.getElementById('quantityMystery');
+    const qLabel=document.getElementById('qtyLabel');
+    if(cfg.hideQty){
+        qDisp.classList.add('hidden');
+        qMyst.classList.remove('hidden');
+        qLabel.textContent='Cuenta las imágenes:';
+    } else {
+        qDisp.classList.remove('hidden');
+        qDisp.textContent=qty;
+        qMyst.classList.add('hidden');
+        qLabel.textContent='Cantidad a digitar:';
+    }
+
+    // Progress
+    const progress=((currentCodeIndex+1)/codes.length)*100;
+    document.getElementById('progressFill').style.width=progress+'%';
+    document.getElementById('progressPercentage').textContent=Math.round(progress)+'%';
+
+    // Code render
+    const codeDisplay=document.getElementById('codeDisplay');
+    if(Array.isArray(currentCodes)) renderMultiCode(currentCodes, cfg.displayMode, codeDisplay);
+    else renderSingleCode(currentCodes, cfg.displayMode, codeDisplay);
+
+    // Product shelf (N aligned copies of same image)
+    renderProductShelf(qty);
+
+    // Timer
+    if(cfg.practiceMode==='timed') startTimer(qty,minQ,maxQ);
+    else{document.getElementById('timerDisplay').textContent='';document.getElementById('timerDisplay').className='timer'}
+}
+
+// ================================================================
+//  QUANTITY GENERATOR — respects parity setting
+// ================================================================
+function generateQuantity(min, max, parity){
+    if(parity === 'any'){
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+    // Build pool of valid numbers in range
+    const pool = [];
+    for(let n = min; n <= max; n++){
+        if(parity === 'even' && n % 2 === 0) pool.push(n);
+        if(parity === 'odd'  && n % 2 !== 0) pool.push(n);
+    }
+    // Fallback: if no valid number in range, return any
+    if(pool.length === 0) return Math.floor(Math.random() * (max - min + 1)) + min;
+    return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// 20 supermarket product SVGs (inline, no internet needed)
+const PRODUCT_SVGS = [
+  // 0 - Leche (milk bottle)
+  `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg"><rect x="18" y="8" width="24" height="64" rx="6" fill="#f0f4ff" stroke="#6366f1" stroke-width="2"/><rect x="22" y="2" width="16" height="10" rx="3" fill="#c7d2fe" stroke="#6366f1" stroke-width="1.5"/><rect x="20" y="20" width="20" height="18" rx="3" fill="#e0e7ff"/><text x="30" y="33" text-anchor="middle" font-size="7" font-weight="bold" fill="#4338ca">LECHE</text><path d="M22 44 Q30 50 38 44" stroke="#6366f1" stroke-width="1.2" fill="none"/></svg>`,
+  // 1 - Jugo (juice carton)
+  `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg"><rect x="14" y="10" width="32" height="58" rx="4" fill="#fef3c7" stroke="#d97706" stroke-width="2"/><polygon points="14,10 30,2 46,10" fill="#fcd34d" stroke="#d97706" stroke-width="1.5"/><rect x="18" y="22" width="24" height="20" rx="3" fill="#fde68a"/><text x="30" y="30" text-anchor="middle" font-size="6" font-weight="bold" fill="#92400e">JUGO</text><circle cx="30" cy="38" r="5" fill="#f59e0b"/><text x="30" y="41" text-anchor="middle" font-size="5" fill="#78350f">🍊</text></svg>`,
+  // 2 - Lata (can)
+  `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg"><rect x="15" y="14" width="30" height="52" rx="4" fill="#d1fae5" stroke="#059669" stroke-width="2"/><ellipse cx="30" cy="14" rx="15" ry="5" fill="#a7f3d0" stroke="#059669" stroke-width="1.5"/><ellipse cx="30" cy="66" rx="15" ry="5" fill="#a7f3d0" stroke="#059669" stroke-width="1.5"/><rect x="18" y="25" width="24" height="16" rx="2" fill="#6ee7b7"/><text x="30" y="36" text-anchor="middle" font-size="6" font-weight="bold" fill="#065f46">ATÚN</text></svg>`,
+  // 3 - Botella agua (water bottle)
+  `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg"><rect x="22" y="6" width="16" height="8" rx="3" fill="#bae6fd" stroke="#0284c7" stroke-width="1.5"/><path d="M16 20 Q14 28 14 40 L14 68 Q14 72 18 72 L42 72 Q46 72 46 68 L46 40 Q46 28 44 20 Q38 14 22 14 Q22 14 22 14 Q22 14 16 20Z" fill="#e0f2fe" stroke="#0284c7" stroke-width="2"/><text x="30" y="46" text-anchor="middle" font-size="6" font-weight="bold" fill="#0369a1">AGUA</text><path d="M20 55 Q30 60 40 55" stroke="#0284c7" stroke-width="1" fill="none"/></svg>`,
+  // 4 - Yogur (yogurt cup)
+  `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg"><path d="M16 20 L14 68 Q14 72 18 72 L42 72 Q46 72 44 68 L42 20 Z" fill="#fce7f3" stroke="#db2777" stroke-width="2"/><rect x="18" y="10" width="24" height="14" rx="3" fill="#fbcfe8" stroke="#db2777" stroke-width="1.5"/><rect x="20" y="28" width="20" height="16" rx="2" fill="#f9a8d4"/><text x="30" y="39" text-anchor="middle" font-size="5.5" font-weight="bold" fill="#9d174d">YOGUR</text></svg>`,
+  // 5 - Cereal box
+  `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg"><rect x="12" y="8" width="36" height="64" rx="3" fill="#fef9c3" stroke="#ca8a04" stroke-width="2"/><rect x="15" y="12" width="30" height="28" rx="2" fill="#fde047"/><text x="30" y="23" text-anchor="middle" font-size="6" font-weight="bold" fill="#713f12">CEREAL</text><circle cx="22" cy="33" r="4" fill="#f97316"/><circle cx="30" cy="30" r="4" fill="#84cc16"/><circle cx="38" cy="33" r="4" fill="#f97316"/><text x="30" y="55" text-anchor="middle" font-size="5" fill="#78350f">500g</text></svg>`,
+  // 6 - Aceite (oil bottle)
+  `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="4" width="12" height="10" rx="3" fill="#fbbf24" stroke="#d97706" stroke-width="1.5"/><path d="M14 24 Q12 32 12 44 L12 66 Q12 70 16 70 L44 70 Q48 70 48 66 L48 44 Q48 32 46 24 Q40 16 20 16 L20 16 Q20 16 14 24Z" fill="#fef08a" stroke="#d97706" stroke-width="2"/><text x="30" y="44" text-anchor="middle" font-size="6" font-weight="bold" fill="#92400e">ACEITE</text><path d="M18 52 Q30 58 42 52" stroke="#d97706" stroke-width="1" fill="none"/></svg>`,
+  // 7 - Galletas (cookies pack)
+  `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="16" width="40" height="52" rx="5" fill="#fffbeb" stroke="#b45309" stroke-width="2"/><rect x="14" y="20" width="32" height="24" rx="3" fill="#fde68a"/><text x="30" y="30" text-anchor="middle" font-size="5.5" font-weight="bold" fill="#78350f">GALLETAS</text><circle cx="22" cy="38" r="3" fill="#b45309"/><circle cx="30" cy="38" r="3" fill="#b45309"/><circle cx="38" cy="38" r="3" fill="#b45309"/><text x="30" y="60" text-anchor="middle" font-size="5" fill="#78350f">200g</text></svg>`,
+  // 8 - Shampoo bottle
+  `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="4" width="14" height="10" rx="3" fill="#c4b5fd" stroke="#7c3aed" stroke-width="1.5"/><path d="M16 18 Q14 26 14 40 L14 66 Q14 70 18 70 L42 70 Q46 70 46 66 L46 40 Q46 26 44 18 Q38 12 22 12 L22 12 Q16 12 16 18Z" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/><text x="30" y="40" text-anchor="middle" font-size="5.5" font-weight="bold" fill="#4c1d95">SHAMPOO</text><path d="M20 50 Q30 56 40 50" stroke="#7c3aed" stroke-width="1" fill="none"/></svg>`,
+  // 9 - Refresco lata (soda can)
+  `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg"><rect x="16" y="12" width="28" height="56" rx="5" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/><ellipse cx="30" cy="12" rx="14" ry="5" fill="#fca5a5" stroke="#dc2626" stroke-width="1.5"/><ellipse cx="30" cy="68" rx="14" ry="5" fill="#fca5a5" stroke="#dc2626" stroke-width="1.5"/><path d="M28 6 L32 6 L33 12 L27 12Z" fill="#ef4444"/><rect x="19" y="24" width="22" height="18" rx="2" fill="#fca5a5"/><text x="30" y="35" text-anchor="middle" font-size="6" font-weight="bold" fill="#7f1d1d">SODA</text></svg>`,
+  // 10 - Pasta (pasta box)
+  `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg"><rect x="11" y="8" width="38" height="64" rx="3" fill="#fff7ed" stroke="#ea580c" stroke-width="2"/><rect x="15" y="14" width="30" height="22" rx="2" fill="#fed7aa"/><text x="30" y="23" text-anchor="middle" font-size="5.5" font-weight="bold" fill="#7c2d12">PASTA</text><line x1="22" y1="30" x2="22" y2="26" stroke="#ea580c" stroke-width="1.5"/><line x1="26" y1="30" x2="26" y2="26" stroke="#ea580c" stroke-width="1.5"/><line x1="30" y1="30" x2="30" y2="26" stroke="#ea580c" stroke-width="1.5"/><line x1="34" y1="30" x2="34" y2="26" stroke="#ea580c" stroke-width="1.5"/><line x1="38" y1="30" x2="38" y2="26" stroke="#ea580c" stroke-width="1.5"/></svg>`,
+  // 11 - Arroz (rice bag)
+  `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg"><path d="M14 20 Q14 8 30 8 Q46 8 46 20 L46 64 Q46 74 30 74 Q14 74 14 64Z" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/><rect x="18" y="26" width="24" height="20" rx="2" fill="#bbf7d0"/><text x="30" y="34" text-anchor="middle" font-size="5.5" font-weight="bold" fill="#14532d">ARROZ</text><text x="30" y="42" text-anchor="middle" font-size="4.5" fill="#166534">1 Kg</text></svg>`,
+  // 12 - Detergente (detergent)
+  `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg"><rect x="13" y="12" width="34" height="60" rx="5" fill="#eff6ff" stroke="#1d4ed8" stroke-width="2"/><rect x="22" y="4" width="16" height="12" rx="3" fill="#bfdbfe" stroke="#1d4ed8" stroke-width="1.5"/><rect x="16" y="20" width="28" height="24" rx="2" fill="#bfdbfe"/><text x="30" y="29" text-anchor="middle" font-size="5.5" font-weight="bold" fill="#1e3a8a">DET.</text><text x="30" y="38" text-anchor="middle" font-size="4.5" fill="#1e3a8a">ROPA</text></svg>`,
+  // 13 - Salsa (sauce bottle)
+  `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg"><rect x="22" y="4" width="16" height="8" rx="3" fill="#fca5a5" stroke="#b91c1c" stroke-width="1.5"/><path d="M16 22 Q14 32 14 44 L14 66 Q14 70 18 70 L42 70 Q46 70 46 66 L46 44 Q46 32 44 22 Q38 14 22 14 L22 14 Q16 14 16 22Z" fill="#fee2e2" stroke="#b91c1c" stroke-width="2"/><text x="30" y="44" text-anchor="middle" font-size="5.5" font-weight="bold" fill="#7f1d1d">SALSA</text><path d="M20 52 Q30 58 40 52" stroke="#b91c1c" stroke-width="1" fill="none"/></svg>`,
+  // 14 - Frijoles (bean can)
+  `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg"><rect x="15" y="12" width="30" height="54" rx="4" fill="#fef3c7" stroke="#92400e" stroke-width="2"/><ellipse cx="30" cy="12" rx="15" ry="5" fill="#fde68a" stroke="#92400e" stroke-width="1.5"/><ellipse cx="30" cy="66" rx="15" ry="5" fill="#fde68a" stroke="#92400e" stroke-width="1.5"/><rect x="18" y="23" width="24" height="18" rx="2" fill="#fcd34d"/><text x="30" y="30" text-anchor="middle" font-size="5" font-weight="bold" fill="#78350f">FRIJO-</text><text x="30" y="37" text-anchor="middle" font-size="5" font-weight="bold" fill="#78350f">LES</text></svg>`,
+  // 15 - Jabón (soap bar)
+  `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="22" width="40" height="36" rx="10" fill="#fdf4ff" stroke="#a855f7" stroke-width="2"/><rect x="14" y="28" width="32" height="24" rx="6" fill="#e9d5ff"/><text x="30" y="38" text-anchor="middle" font-size="5.5" font-weight="bold" fill="#6b21a8">JABÓN</text><path d="M22 45 Q30 50 38 45" stroke="#a855f7" stroke-width="1" fill="none"/></svg>`,
+  // 16 - Mantequilla (butter)
+  `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="24" width="40" height="32" rx="5" fill="#fefce8" stroke="#ca8a04" stroke-width="2"/><rect x="13" y="28" width="34" height="24" rx="3" fill="#fef08a"/><text x="30" y="37" text-anchor="middle" font-size="5" font-weight="bold" fill="#713f12">MANT.</text><text x="30" y="45" text-anchor="middle" font-size="4.5" fill="#92400e">250g</text></svg>`,
+  // 17 - Refresco botella (soda bottle)
+  `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg"><rect x="24" y="2" width="12" height="8" rx="3" fill="#86efac" stroke="#16a34a" stroke-width="1.5"/><path d="M18 18 Q16 28 16 42 L16 66 Q16 70 20 70 L40 70 Q44 70 44 66 L44 42 Q44 28 42 18 Q38 12 24 12 L24 12 Q18 12 18 18Z" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/><text x="30" y="42" text-anchor="middle" font-size="5.5" font-weight="bold" fill="#14532d">SODA</text><path d="M20 52 Q30 57 40 52" stroke="#16a34a" stroke-width="1" fill="none"/></svg>`,
+  // 18 - Azúcar (sugar bag)
+  `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg"><path d="M12 22 Q12 10 30 10 Q48 10 48 22 L46 66 Q46 74 30 74 Q14 74 14 66Z" fill="#fafafa" stroke="#9ca3af" stroke-width="2"/><rect x="16" y="28" width="28" height="22" rx="2" fill="#e5e7eb"/><text x="30" y="37" text-anchor="middle" font-size="5.5" font-weight="bold" fill="#374151">AZÚCAR</text><text x="30" y="45" text-anchor="middle" font-size="4.5" fill="#6b7280">1 Kg</text></svg>`,
+  // 19 - Café (coffee jar)
+  `<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg"><rect x="14" y="14" width="32" height="58" rx="5" fill="#fdf8f0" stroke="#78350f" stroke-width="2"/><rect x="18" y="8" width="24" height="12" rx="4" fill="#d6d3d1" stroke="#78350f" stroke-width="1.5"/><rect x="17" y="24" width="26" height="22" rx="3" fill="#d97706"/><text x="30" y="33" text-anchor="middle" font-size="5.5" font-weight="bold" fill="#fff7ed">CAFÉ</text><text x="30" y="41" text-anchor="middle" font-size="4.5" fill="#fffbeb">200g</text></svg>`
+];
+
+
+function renderProductShelf(qty){
+    const shelf = document.getElementById('productShelf');
+    const grid  = document.getElementById('shelfGrid');
+    const cfg   = savedConfig;
+
+    if(!cfg.showImages){
+        shelf.classList.add('shelf-hidden');
+        return;
+    }
+    shelf.classList.remove('shelf-hidden');
+
+    // Deterministic product SVG per code index
+    const svgIdx = currentCodeIndex % PRODUCT_SVGS.length;
+    const svgStr = PRODUCT_SVGS[svgIdx];
+    const count  = Math.min(qty, 30);
+
+    // Wait one frame so shelf has real layout dimensions
+    requestAnimationFrame(()=>{
+        const shelfW = shelf.clientWidth  - 16;
+        const shelfH = shelf.clientHeight - 16;
+
+        if(shelfW < 10 || shelfH < 10){ buildGrid(3, count, svgStr, grid); return; }
+
+        // --- Find all column counts where every cell is visible (min 20px) ---
+        const validCols = [];
+        for(let c = 1; c <= 10; c++){
+            const rows  = Math.ceil(count / c);
+            const cellW = (shelfW - (c - 1) * 4) / c;
+            const cellH = (shelfH - (rows - 1) * 4) / rows;
+            const size  = Math.min(cellW, cellH);
+            if(size >= 20) validCols.push(c);
         }
 
-        // Atajos de teclado
-        document.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !document.getElementById('practicePanel').classList.contains('hidden')) {
-                nextCode();
+        let chosenCols;
+        if(validCols.length === 0){
+            // Fallback: pick the column count that maximises minimum cell size
+            let best = 1, bestSize = 0;
+            for(let c = 1; c <= 10; c++){
+                const rows = Math.ceil(count / c);
+                const size = Math.min((shelfW-(c-1)*4)/c, (shelfH-(rows-1)*4)/rows);
+                if(size > bestSize){ bestSize = size; best = c; }
             }
+            chosenCols = best;
+        } else {
+            // --- VARY columns randomly among valid options each code ---
+            // This makes each code show a different row layout (2-wide, 3-wide, 4-wide…)
+            chosenCols = validCols[Math.floor(Math.random() * validCols.length)];
+        }
+
+        const rows  = Math.ceil(count / chosenCols);
+        const cellW = Math.floor((shelfW - (chosenCols - 1) * 4) / chosenCols);
+        const cellH = Math.floor((shelfH - (rows - 1) * 4) / rows);
+
+        grid.style.gridTemplateColumns = `repeat(${chosenCols}, ${cellW}px)`;
+        grid.style.gridAutoRows        = `${cellH}px`;
+
+        buildGrid(chosenCols, count, svgStr, grid);
+    });
+}
+
+function buildGrid(cols, count, svgStr, grid){
+    grid.innerHTML = '';
+    for(let i = 0; i < count; i++){
+        const cell = document.createElement('div');
+        cell.className = 'shelf-item';
+        cell.innerHTML = svgStr;
+        grid.appendChild(cell);
+    }
+}
+
+// ================================================================
+//  CODE RENDERERS
+// ================================================================
+function renderMultiCode(currentCodes, displayMode, codeDisplay){
+    const n=currentCodes.length;
+    const gridCols=n===1?'1fr':n===2?'1fr 1fr':'1fr 1fr 1fr';
+    let html=`<div style="display:grid;grid-template-columns:${gridCols};gap:${n===3?'7px':'10px'};width:100%;max-width:100%;padding:0 2px">`;
+    currentCodes.forEach((item,idx)=>{
+        const pad=n===3?'9px':'13px', minH=n===3?'130px':'145px', lblFs=n===3?'.72em':'.83em';
+        html+=`<div style="background:linear-gradient(135deg,rgba(139,92,246,.05),rgba(217,70,239,.05));padding:${pad};border-radius:10px;border:2px solid rgba(139,92,246,.2);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:${minH};overflow:hidden">
+            <div style="font-size:${lblFs};color:#8b5cf6;font-weight:700;margin-bottom:6px;text-transform:uppercase;text-align:center;padding:4px 8px;background:rgba(139,92,246,.1);border-radius:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">${item.columnName}</div>`;
+        if(displayMode==='barcode'){
+            html+=`<div style="flex:1;display:flex;align-items:center;justify-content:center;width:100%;overflow:hidden"><svg id="barcodeCanvas${idx}" style="max-width:100%;height:auto"></svg></div>`;
+        } else {
+            const fs=n===1?'2em':n===2?'1.3em':'1em';
+            html+=`<div style="flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;width:100%"><div class="code-number" style="font-size:${fs};padding:${n===3?'7px 9px':'9px 12px'};margin:0;word-break:break-all;max-width:100%;line-height:1.2">${item.code}</div></div>`;
+        }
+        html+='</div>';
+    });
+    html+='</div>'; codeDisplay.innerHTML=html;
+    if(displayMode==='barcode'){
+        currentCodes.forEach((item,idx)=>{
+            try{
+                const isMob=window.innerWidth<=768,isS=window.innerWidth<=480;
+                let bW,bH,fS;
+                if(n===1){bW=isS?1:(isMob?1.3:1.8);bH=isS?55:(isMob?65:80);fS=isS?13:(isMob?15:17)}
+                else if(n===2){bW=isS?.8:(isMob?1:1.2);bH=isS?45:(isMob?55:65);fS=isS?11:(isMob?13:15)}
+                else{bW=isS?.6:(isMob?.75:.9);bH=isS?40:(isMob?45:55);fS=isS?9:(isMob?11:12)}
+                JsBarcode(`#barcodeCanvas${idx}`,item.code,{format:'CODE128',width:bW,height:bH,displayValue:true,fontSize:fS,margin:3});
+            }catch(e){const el=document.getElementById(`barcodeCanvas${idx}`);if(el)el.outerHTML=`<div class="code-number" style="font-size:1em;padding:6px;margin:0">${item.code}</div>`}
         });
+    }
+}
 
-        function finishPractice() {
-            clearInterval(timer);
-            
-            document.getElementById('practicePanel').classList.add('hidden');
-            document.getElementById('resultsPanel').classList.remove('hidden');
+function renderSingleCode(code, displayMode, codeDisplay){
+    if(displayMode==='barcode'){
+        codeDisplay.innerHTML='<svg id="barcodeCanvas"></svg>';
+        try{
+            const isMob=window.innerWidth<=768,isS=window.innerWidth<=480;
+            JsBarcode('#barcodeCanvas',code,{format:'CODE128',width:isS?1.2:(isMob?1.5:2),height:isS?60:(isMob?70:90),displayValue:true,fontSize:isS?14:(isMob?16:18),margin:5});
+        }catch(e){codeDisplay.innerHTML=`<div class="code-number">${code}</div>`}
+    } else codeDisplay.innerHTML=`<div class="code-number">${code}</div>`;
+}
 
-            const tableBody = document.getElementById('resultsTableBody');
-            tableBody.innerHTML = '';
-            
-            let total = 0;
-            
-            results.forEach((result, index) => {
-                const row = tableBody.insertRow();
-                row.insertCell(0).textContent = index + 1;
-                
-                // Verificar si tiene múltiples códigos o uno solo
-                if (result.codes && Array.isArray(result.codes)) {
-                    // Múltiples códigos
-                    const codesHTML = result.codes.map(item => 
-                        `<div style="margin: 3px 0;">
-                            <span style="color: #8b5cf6; font-weight: 600; font-size: 0.85em;">${item.columnName}:</span> 
-                            <span style="font-family: 'Courier New', monospace;">${item.code}</span>
-                        </div>`
-                    ).join('');
-                    row.insertCell(1).innerHTML = codesHTML;
-                } else {
-                    // Código simple
-                    const codeCell = row.insertCell(1);
-                    codeCell.textContent = result.code;
-                    codeCell.style.fontFamily = "'Courier New', monospace";
-                }
-                
-                row.insertCell(2).textContent = result.quantity;
-                total += result.quantity;
-            });
+// ================================================================
+//  TIMER
+// ================================================================
+function calcTime(qty, minQ, maxQ){
+    if(!savedConfig||!savedConfig.useRandomTime) return savedConfig?savedConfig.timePerCode:10;
+    const tMin=savedConfig.timeMin, tMax=savedConfig.timeMax;
+    const qRange=maxQ-minQ;
+    if(qRange<=0) return Math.round((tMin+tMax)/2);
+    const ratio=(qty-minQ)/qRange;
+    const base=tMin+ratio*(tMax-tMin);
+    const jitter=base*.1*(Math.random()*2-1);
+    return Math.max(tMin,Math.min(tMax,Math.round(base+jitter)));
+}
 
-            document.getElementById('totalQuantity').textContent = total.toLocaleString();
-        }
+function startTimer(qty, minQ, maxQ){
+    clearInterval(timer);
+    timeRemaining=calcTime(qty,minQ,maxQ);
+    updateTimerDisplay();
+    timer=setInterval(()=>{
+        timeRemaining--;
+        updateTimerDisplay();
+        if(timeRemaining<=0){clearInterval(timer);nextCode()}
+    },1000);
+}
 
-        function cancelPractice() {
-            if (confirm('¿Estás seguro de cancelar la práctica?')) {
-                clearInterval(timer);
-                resetApp();
-            }
-        }
+function updateTimerDisplay(){
+    const el=document.getElementById('timerDisplay');
+    el.textContent=`⏱️ Tiempo restante: ${timeRemaining}s`;
+    timeRemaining<=5?el.classList.add('warning'):el.classList.remove('warning');
+}
 
-        function resetApp() {
-            clearInterval(timer);
-            codes = [];
-            currentCodeIndex = 0;
-            results = [];
-            excelData = null;
-            allExcelCodes = [];
-            
-            document.getElementById('setupPanel').classList.remove('hidden');
-            document.getElementById('practicePanel').classList.add('hidden');
-            document.getElementById('resultsPanel').classList.add('hidden');
-            document.getElementById('excelOptions').classList.add('hidden');
-            
-            document.getElementById('progressFill').style.width = '0%';
-            document.getElementById('fileName').textContent = '';
-            document.getElementById('fileInput').value = '';
-            
-            // Limpiar los 3 selectores
-            for (let i = 1; i <= 3; i++) {
-                const select = document.getElementById(`columnSelect${i}`);
-                if (select) {
-                    select.innerHTML = '<option value="">No seleccionada</option>';
-                }
-            }
-            
-            document.getElementById('previewCount').textContent = '0';
-            document.getElementById('codeLimit').value = '50';
-        }
+function nextCode(){
+    clearInterval(timer);
+    const cur=codes[currentCodeIndex];
+    if(Array.isArray(cur)) results.push({codes:cur,quantity:currentQuantity});
+    else results.push({code:cur,quantity:currentQuantity});
+    currentCodeIndex++;
+    showCurrentCode();
+}
 
-        // Crear partículas de fondo animadas
-        function createParticles() {
-            const particlesContainer = document.getElementById('particles');
-            if (!particlesContainer) return;
-            
-            for (let i = 0; i < 20; i++) {
-                const particle = document.createElement('div');
-                particle.style.position = 'absolute';
-                particle.style.width = Math.random() * 15 + 5 + 'px';
-                particle.style.height = particle.style.width;
-                particle.style.borderRadius = '50%';
-                particle.style.background = 'rgba(255, 255, 255, 0.15)';
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.bottom = '-20px';
-                particle.style.animation = `float ${Math.random() * 10 + 15}s linear infinite`;
-                particle.style.animationDelay = Math.random() * 5 + 's';
-                particlesContainer.appendChild(particle);
-            }
-        }
+document.addEventListener('keypress', e=>{
+    if(e.key==='Enter'&&!document.getElementById('practicePanel').classList.contains('hidden')) nextCode();
+});
 
-        // Agregar estilos de animación de partículas
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes float {
-                0% {
-                    transform: translateY(0) translateX(0) rotate(0deg);
-                    opacity: 0;
-                }
-                10% {
-                    opacity: 1;
-                }
-                90% {
-                    opacity: 1;
-                }
-                100% {
-                    transform: translateY(-100vh) translateX(${Math.random() * 200 - 100}px) rotate(360deg);
-                    opacity: 0;
-                }
-            }
+// ================================================================
+//  FINISH & RESULTS
+// ================================================================
+function finishPractice(){
+    clearInterval(timer);
+    showSuccessAnimation();
+    document.getElementById('practicePanel').classList.add('hidden');
+    document.getElementById('resultsPanel').classList.remove('hidden');
+    const tbody=document.getElementById('resultsTableBody'); tbody.innerHTML='';
+    let total=0;
+    results.forEach((r,i)=>{
+        const row=tbody.insertRow(); row.insertCell(0).textContent=i+1;
+        if(r.codes&&Array.isArray(r.codes)){
+            row.insertCell(1).innerHTML=r.codes.map(item=>`<div style="margin:3px 0"><span style="color:#8b5cf6;font-weight:600;font-size:.83em">${item.columnName}:</span> <span style="font-family:'Courier New',monospace">${item.code}</span></div>`).join('');
+        } else {const c=row.insertCell(1);c.textContent=r.code;c.style.fontFamily="'Courier New',monospace"}
+        row.insertCell(2).textContent=r.quantity; total+=r.quantity;
+    });
+    document.getElementById('totalQuantity').textContent=total.toLocaleString();
+    // Stats
+    const se=document.getElementById('resultsStats'); if(se) se.remove();
+    if(results.length>0){
+        const avg=(total/results.length).toFixed(1);
+        const maxQ=Math.max(...results.map(r=>r.quantity)), minQ2=Math.min(...results.map(r=>r.quantity));
+        const sd=document.createElement('div'); sd.id='resultsStats';
+        sd.style.cssText='display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:14px';
+        sd.innerHTML=`
+            <div style="background:linear-gradient(135deg,rgba(16,185,129,.1),rgba(5,150,105,.1));padding:11px 18px;border-radius:12px;border:2px solid rgba(16,185,129,.3);text-align:center">
+                <div style="font-size:.78em;color:#6b7280;font-weight:600;text-transform:uppercase">Promedio</div>
+                <div style="font-size:1.5em;color:#10b981;font-weight:800;margin-top:3px">${avg}</div>
+            </div>
+            <div style="background:linear-gradient(135deg,rgba(239,68,68,.1),rgba(220,38,38,.1));padding:11px 18px;border-radius:12px;border:2px solid rgba(239,68,68,.3);text-align:center">
+                <div style="font-size:.78em;color:#6b7280;font-weight:600;text-transform:uppercase">Máximo</div>
+                <div style="font-size:1.5em;color:#ef4444;font-weight:800;margin-top:3px">${maxQ}</div>
+            </div>
+            <div style="background:linear-gradient(135deg,rgba(59,130,246,.1),rgba(37,99,235,.1));padding:11px 18px;border-radius:12px;border:2px solid rgba(59,130,246,.3);text-align:center">
+                <div style="font-size:.78em;color:#6b7280;font-weight:600;text-transform:uppercase">Mínimo</div>
+                <div style="font-size:1.5em;color:#3b82f6;font-weight:800;margin-top:3px">${minQ2}</div>
+            </div>`;
+        const h2=document.querySelector('.results-panel h2');
+        h2.parentNode.insertBefore(sd,h2.nextSibling);
+    }
+}
 
-            .timer.warning {
-                color: #ef4444 !important;
-                animation: timerWarning 0.5s ease-in-out infinite;
-            }
+function cancelPractice(){
+    if(confirm('¿Estás seguro de cancelar la práctica?')){
+        clearInterval(timer); clearInterval(areaCountdownTimer);
+        ['areaPanel','practicePanel'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+        document.getElementById('setupPanel').classList.remove('hidden');
+    }
+}
 
-            @keyframes timerWarning {
-                0%, 100% {
-                    opacity: 1;
-                }
-                50% {
-                    opacity: 0.7;
-                }
-            }
+function resetApp(){
+    clearInterval(timer); clearInterval(areaCountdownTimer);
+    codes=[]; currentCodeIndex=0; results=[];
+    ['practicePanel','resultsPanel','areaPanel'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+    document.getElementById('setupPanel').classList.remove('hidden');
+    document.getElementById('progressFill').style.width='0%';
+    // Preserve: codeLimit, file settings, all config toggles
+}
 
-            .container {
-                position: relative;
-                z-index: 1;
-            }
-        `;
-        document.head.appendChild(style);
+// ================================================================
+//  EXPORT
+// ================================================================
+function exportToExcel(){
+    if(results.length===0){alert('No hay resultados para exportar');return}
+    const hasM=results[0].codes&&Array.isArray(results[0].codes);
+    let ws_data=[];
+    if(hasM){
+        const h=['#']; results[0].codes.forEach(i=>h.push(i.columnName)); h.push('Cantidad'); ws_data.push(h);
+        results.forEach((r,i)=>{const row=[i+1];r.codes.forEach(x=>row.push(x.code));row.push(r.quantity);ws_data.push(row)});
+        const tr=[''];for(let i=0;i<results[0].codes.length;i++)tr.push('');
+        tr[tr.length-1]='TOTAL';tr.push(results.reduce((s,r)=>s+r.quantity,0));ws_data.push(tr);
+    } else {
+        ws_data=[['#','Código de Barras','Cantidad']];
+        results.forEach((r,i)=>ws_data.push([i+1,r.code,r.quantity]));
+        ws_data.push(['','TOTAL',results.reduce((s,r)=>s+r.quantity,0)]);
+    }
+    const ws=XLSX.utils.aoa_to_sheet(ws_data); const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Resultados');
+    XLSX.writeFile(wb,`inventario_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
 
-        // Inicializar partículas al cargar
-        window.addEventListener('load', createParticles);
+// ================================================================
+//  UTILS
+// ================================================================
+function shuffleArray(arr){
+    for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}
+    return arr;
+}
 
-        // Mejorar el timer para que cambie de color cuando queda poco tiempo
-        function updateTimerDisplay() {
-            const timerDisplay = document.getElementById('timerDisplay');
-            timerDisplay.textContent = `⏱️ Tiempo restante: ${timeRemaining}s`;
-            
-            if (timeRemaining <= 5) {
-                timerDisplay.classList.add('warning');
-            } else {
-                timerDisplay.classList.remove('warning');
-            }
-        }
+function showSuccessAnimation(){
+    for(let i=0;i<30;i++){
+        setTimeout(()=>{
+            const c=document.createElement('div');
+            c.style.cssText=`position:fixed;width:10px;height:10px;background:${['#667eea','#764ba2','#d946ef','#10b981','#f59e0b'][Math.floor(Math.random()*5)]};left:${Math.random()*100}%;top:0;opacity:1;border-radius:${Math.random()>.5?'50%':'0'};pointer-events:none;z-index:9999`;
+            document.body.appendChild(c);
+            const a=c.animate([{transform:'translateY(0) rotate(0)',opacity:1},{transform:`translateY(100vh) rotate(${Math.random()*720}deg)`,opacity:0}],{duration:2000+Math.random()*1000,easing:'cubic-bezier(.25,.46,.45,.94)'});
+            a.onfinish=()=>c.remove();
+        },i*50);
+    }
+}
 
-        // Agregar sonido de éxito al completar (visual)
-        function showSuccessAnimation() {
-            // Crear confeti visual
-            for (let i = 0; i < 30; i++) {
-                setTimeout(() => {
-                    const confetti = document.createElement('div');
-                    confetti.style.position = 'fixed';
-                    confetti.style.width = '10px';
-                    confetti.style.height = '10px';
-                    confetti.style.background = ['#667eea', '#764ba2', '#d946ef', '#10b981', '#f59e0b'][Math.floor(Math.random() * 5)];
-                    confetti.style.left = Math.random() * 100 + '%';
-                    confetti.style.top = '0';
-                    confetti.style.opacity = '1';
-                    confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
-                    confetti.style.pointerEvents = 'none';
-                    confetti.style.zIndex = '9999';
-                    document.body.appendChild(confetti);
-                    
-                    const animation = confetti.animate([
-                        { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
-                        { transform: `translateY(100vh) rotate(${Math.random() * 720}deg)`, opacity: 0 }
-                    ], {
-                        duration: 2000 + Math.random() * 1000,
-                        easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-                    });
-                    
-                    animation.onfinish = () => confetti.remove();
-                }, i * 50);
-            }
-        }
+function showToast(msg){
+    const t=document.getElementById('toast');
+    t.textContent=msg; t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)';
+    setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(80px)'},2200);
+}
 
-        // Modificar finishPractice para agregar estadísticas y confeti
-        const originalFinishPractice = finishPractice;
-        finishPractice = function() {
-            clearInterval(timer);
-            
-            showSuccessAnimation();
-            
-            document.getElementById('practicePanel').classList.add('hidden');
-            document.getElementById('resultsPanel').classList.remove('hidden');
-
-            const tableBody = document.getElementById('resultsTableBody');
-            tableBody.innerHTML = '';
-            
-            let total = 0;
-            
-            results.forEach((result, index) => {
-                const row = tableBody.insertRow();
-                row.insertCell(0).textContent = index + 1;
-                row.insertCell(1).textContent = result.code;
-                row.insertCell(2).textContent = result.quantity;
-                total += result.quantity;
-            });
-
-            document.getElementById('totalQuantity').textContent = total.toLocaleString();
-            
-            // Agregar estadísticas adicionales
-            const resultsHeader = document.querySelector('.results-panel h2');
-            if (resultsHeader && !document.getElementById('resultsStats')) {
-                const statsDiv = document.createElement('div');
-                statsDiv.id = 'resultsStats';
-                statsDiv.style.cssText = 'display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 15px;';
-                
-                const avgQuantity = (total / results.length).toFixed(1);
-                const maxQuantity = Math.max(...results.map(r => r.quantity));
-                const minQuantity = Math.min(...results.map(r => r.quantity));
-                
-                statsDiv.innerHTML = `
-                    <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%); padding: 12px 20px; border-radius: 12px; border: 2px solid rgba(16, 185, 129, 0.3);">
-                        <div style="font-size: 0.8em; color: #6b7280; font-weight: 600; text-transform: uppercase;">Promedio</div>
-                        <div style="font-size: 1.6em; color: #10b981; font-weight: 800; margin-top: 4px;">${avgQuantity}</div>
-                    </div>
-                    <div style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%); padding: 12px 20px; border-radius: 12px; border: 2px solid rgba(239, 68, 68, 0.3);">
-                        <div style="font-size: 0.8em; color: #6b7280; font-weight: 600; text-transform: uppercase;">Máximo</div>
-                        <div style="font-size: 1.6em; color: #ef4444; font-weight: 800; margin-top: 4px;">${maxQuantity}</div>
-                    </div>
-                    <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%); padding: 12px 20px; border-radius: 12px; border: 2px solid rgba(59, 130, 246, 0.3);">
-                        <div style="font-size: 0.8em; color: #6b7280; font-weight: 600; text-transform: uppercase;">Mínimo</div>
-                        <div style="font-size: 1.6em; color: #3b82f6; font-weight: 800; margin-top: 4px;">${minQuantity}</div>
-                    </div>
-                `;
-                
-                resultsHeader.parentNode.insertBefore(statsDiv, resultsHeader.nextSibling);
-            }
-        };
-
-        // Función para exportar resultados a Excel
-        function exportToExcel() {
-            if (results.length === 0) {
-                alert('No hay resultados para exportar');
-                return;
-            }
-
-            // Determinar si hay múltiples columnas
-            const hasMultipleColumns = results[0].codes && Array.isArray(results[0].codes);
-            
-            let ws_data = [];
-            
-            if (hasMultipleColumns) {
-                // Header con nombres de columnas
-                const columnHeaders = ['#'];
-                results[0].codes.forEach(item => {
-                    columnHeaders.push(item.columnName);
-                });
-                columnHeaders.push('Cantidad');
-                ws_data.push(columnHeaders);
-                
-                // Datos
-                results.forEach((result, index) => {
-                    const row = [index + 1];
-                    result.codes.forEach(item => {
-                        row.push(item.code);
-                    });
-                    row.push(result.quantity);
-                    ws_data.push(row);
-                });
-                
-                // Total
-                const totalRow = [''];
-                for (let i = 0; i < results[0].codes.length; i++) {
-                    totalRow.push('');
-                }
-                totalRow[totalRow.length - 1] = 'TOTAL';
-                totalRow.push(results.reduce((sum, r) => sum + r.quantity, 0));
-                ws_data.push(totalRow);
-            } else {
-                // Formato simple
-                ws_data = [
-                    ['#', 'Código de Barras', 'Cantidad']
-                ];
-
-                results.forEach((result, index) => {
-                    ws_data.push([index + 1, result.code, result.quantity]);
-                });
-
-                const total = results.reduce((sum, r) => sum + r.quantity, 0);
-                ws_data.push(['', 'TOTAL', total]);
-            }
-
-            const ws = XLSX.utils.aoa_to_sheet(ws_data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Resultados");
-
-            const fileName = `inventario_resultados_${new Date().toISOString().slice(0,10)}.xlsx`;
-            XLSX.writeFile(wb, fileName);
-        }
-    </script>
+// Particles
+function createParticles(){
+    const c=document.getElementById('particles'); if(!c) return;
+    for(let i=0;i<20;i++){
+        const p=document.createElement('div'); const sz=Math.random()*15+5;
+        p.style.cssText=`position:absolute;width:${sz}px;height:${sz}px;border-radius:50%;background:rgba(255,255,255,.15);left:${Math.random()*100}%;bottom:-20px;animation:floatP ${Math.random()*10+15}s linear infinite;animation-delay:${Math.random()*5}s`;
+        c.appendChild(p);
+    }
+}
+const ds=document.createElement('style');
+ds.textContent=`@keyframes floatP{0%{transform:translateY(0) rotate(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(-100vh) translateX(${Math.random()*200-100}px) rotate(360deg);opacity:0}}`;
+document.head.appendChild(ds);
+window.addEventListener('load',createParticles);
+</script>
 </body>
 </html>
