@@ -64,15 +64,16 @@
         /* --- PRACTICE LAYOUT: code LEFT, product shelf RIGHT --- */
         .practice-main{display:flex;flex:1;overflow:hidden;flex-direction:row;min-height:0;gap:8px;align-items:stretch}
 
-        /* LEFT: code + quantity — fixed width so shelf gets rest */
-        .practice-left{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:0 0 auto;width:260px;text-align:center;padding:4px 2px;min-width:0;overflow:hidden}
+        /* LEFT: code + quantity — expands to full width when shelf hidden */
+        .practice-left{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:0 0 280px;text-align:center;padding:4px 8px;overflow:hidden}
+        .practice-left.full-width{flex:1}
 
         /* RIGHT: product shelf */
         .product-shelf{flex:1;min-width:0;display:flex;flex-direction:column;align-items:stretch;background:linear-gradient(160deg,#f8f7ff 0%,#f0ebff 100%);border-radius:14px;border:2px solid rgba(139,92,246,.18);padding:8px;overflow:hidden;animation:scaleIn .35s ease-out}
         .product-shelf.shelf-hidden{display:none}
 
-        /* Grid fills the shelf — NO scroll, items are sized to fit */
-        .shelf-grid{display:grid;gap:4px;width:100%;height:100%;overflow:hidden}
+        /* Grid: vertical flow — items fill column top-to-bottom, then next column */
+        .shelf-grid{display:grid;gap:4px;width:100%;height:100%;overflow:hidden;grid-auto-flow:column}
 
         /* Each cell */
         .shelf-item{border-radius:7px;overflow:hidden;border:1.5px solid rgba(139,92,246,.15);background:white;display:flex;align-items:center;justify-content:center}
@@ -315,9 +316,15 @@
             <label class="switch"><input type="checkbox" id="imagesToggle" onchange="toggleImagesConfig()"><span class="slider"></span></label>
         </div>
         <div id="imagesConfig" class="hidden" style="padding:0;margin-bottom:10px">
-            <div class="toggle-row" style="margin-bottom:0">
-                <div class="tr-label">🔒 Modo "Contar productos" (ocultar cantidad) <small>Se muestra la imagen con la cantidad en badge — el practicante ve el producto y la cantidad como referencia visual</small></div>
-                <label class="switch"><input type="checkbox" id="hideQtyToggle"><span class="slider"></span></label>
+            <div class="form-group" style="margin-top:8px">
+                <label>🗂️ Modo de conteo:</label>
+                <select id="countMode">
+                    <option value="grid">📦 Por filas — productos individuales en grid</option>
+                    <option value="grid_hidden">🔒 Por filas — sin cantidad (el practicante cuenta)</option>
+                    <option value="box_single">📫 Caja sola — una caja con viñeta de cantidad</option>
+                    <option value="box_loose">📫 Caja + sueltos — caja (con viñeta) y productos sueltos encima</option>
+                    <option value="box_multi">📫 Varias cajas — N cajas en fila, cada una con viñeta</option>
+                </select>
             </div>
         </div>
 
@@ -559,7 +566,7 @@ function startPractice(){
     const useArea=document.getElementById('areaToggle').checked;
     const areaRand=document.getElementById('areaRandomToggle').checked;
     const showImages=document.getElementById('imagesToggle').checked;
-    const hideQty=showImages&&document.getElementById('hideQtyToggle').checked;
+    const countMode=showImages ? document.getElementById('countMode').value : 'grid';
 
     savedConfig={
         codes:[...codes], orderMode,
@@ -576,7 +583,7 @@ function startPractice(){
         areaCode:useArea?(areaRand?randomAreaCode():parseInt(document.getElementById('areaCode').value)):null,
         areaTime:useArea?parseInt(document.getElementById('areaTime').value):0,
         areaDisplayMode:document.getElementById('areaDisplayMode').value,
-        showImages, hideQty
+        showImages, countMode
     };
 
     currentCodeIndex=0; results=[];
@@ -642,6 +649,10 @@ function showAreaScreen(){
 function launchPractice(){
     document.getElementById('practicePanel').classList.remove('hidden');
     document.getElementById('totalCodes').textContent=codes.length;
+    // Pre-set left panel width based on images setting
+    const left = document.querySelector('.practice-left');
+    if(!savedConfig.showImages) left.classList.add('full-width');
+    else left.classList.remove('full-width');
     showCurrentCode();
 }
 
@@ -656,19 +667,19 @@ function showCurrentCode(){
     const qty=generateQuantity(minQ, maxQ, cfg.quantityParity);
     currentQuantity=qty;
 
-    // Quantity display vs mystery
-    const qDisp=document.getElementById('quantityDisplay');
-    const qMyst=document.getElementById('quantityMystery');
-    const qLabel=document.getElementById('qtyLabel');
-    if(cfg.hideQty){
+    // Quantity display — hidden only in grid_hidden mode
+    const qDisp  = document.getElementById('quantityDisplay');
+    const qMyst  = document.getElementById('quantityMystery');
+    const qLabel = document.getElementById('qtyLabel');
+    if(cfg.countMode === 'grid_hidden'){
         qDisp.classList.add('hidden');
         qMyst.classList.remove('hidden');
-        qLabel.textContent='Cuenta las imágenes:';
+        qLabel.textContent = 'Cantidad a digitar:';
     } else {
         qDisp.classList.remove('hidden');
-        qDisp.textContent=qty;
+        qDisp.textContent = qty;
         qMyst.classList.add('hidden');
-        qLabel.textContent='Cantidad a digitar:';
+        qLabel.textContent = 'Cantidad a digitar:';
     }
 
     // Progress
@@ -755,60 +766,186 @@ const PRODUCT_SVGS = [
 function renderProductShelf(qty){
     const shelf = document.getElementById('productShelf');
     const grid  = document.getElementById('shelfGrid');
+    const left  = document.querySelector('.practice-left');
     const cfg   = savedConfig;
 
     if(!cfg.showImages){
         shelf.classList.add('shelf-hidden');
+        left.classList.add('full-width');
         return;
     }
     shelf.classList.remove('shelf-hidden');
+    left.classList.remove('full-width');
 
     // Deterministic product SVG per code index
     const svgIdx = currentCodeIndex % PRODUCT_SVGS.length;
     const svgStr = PRODUCT_SVGS[svgIdx];
-    const count  = Math.min(qty, 30);
 
-    // Wait one frame so shelf has real layout dimensions
+    // ── BOX MODES ─────────────────────────────────────────────────
+    const isBoxMode = ['box_single','box_loose','box_multi'].includes(cfg.countMode);
+    if(isBoxMode){
+        grid.style.display             = 'flex';
+        grid.style.gridTemplateRows    = '';
+        grid.style.gridTemplateColumns = '';
+        grid.style.gridAutoColumns     = '';
+        grid.style.gridAutoFlow        = '';
+
+        grid.style.gridAutoFlow = '';
+
+        // All box modes need real dimensions — use requestAnimationFrame
+        requestAnimationFrame(()=>{
+            const shelfW = shelf.clientWidth  - 20;
+            const shelfH = shelf.clientHeight - 20;
+
+            // Helper: build box HTML with dynamic size
+            function boxHTML(boxQty, bw, bh){
+                const bfs = bw > 100 ? '1.2em' : '0.85em';
+                const badgeSize = bw > 100 ? 36 : 28;
+                const badgeTop  = bw > 100 ? -13 : -10;
+                return `
+                <div style="position:relative;display:inline-flex;align-items:center;justify-content:center;
+                    width:${bw}px;height:${bh}px;flex-shrink:0;
+                    background:linear-gradient(160deg,#fef3c7,#fde68a);
+                    border:2.5px solid #d97706;border-radius:10px;
+                    box-shadow:0 4px 14px rgba(217,119,6,.22);">
+                    <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);
+                        width:36%;height:100%;background:rgba(251,191,36,.3);
+                        border-left:1px solid rgba(217,119,6,.25);border-right:1px solid rgba(217,119,6,.25);
+                        pointer-events:none"></div>
+                    <div style="width:55%;height:55%;display:flex;align-items:center;justify-content:center;z-index:1">
+                        ${svgStr}
+                    </div>
+                    <div style="position:absolute;top:${badgeTop}px;right:${badgeTop}px;
+                        background:linear-gradient(135deg,#6366f1,#d946ef);
+                        color:white;font-size:${bfs};font-weight:900;
+                        min-width:${badgeSize}px;height:${badgeSize}px;border-radius:${badgeSize}px;padding:0 6px;
+                        display:flex;align-items:center;justify-content:center;
+                        box-shadow:0 3px 8px rgba(99,102,241,.4);
+                        border:2px solid white;z-index:2;letter-spacing:-0.5px">${boxQty}</div>
+                </div>`;
+            }
+
+            // Helper: loose product card with dynamic size
+            function looseHTML(lw, lh){
+                // Wrap svgStr so the SVG scales to fill cell while preserving aspect ratio
+                const svgFixed = svgStr.replace('<svg ', `<svg width="${lw}" height="${lh}" preserveAspectRatio="xMidYMid meet" `);
+                return `<div style="width:${lw}px;height:${lh}px;display:flex;align-items:center;justify-content:center;
+                    background:white;border-radius:7px;border:1.5px solid rgba(139,92,246,.2);
+                    box-shadow:0 2px 5px rgba(0,0,0,.07);flex-shrink:0;overflow:hidden;">${svgFixed}</div>`;
+            }
+
+            // ── 1. SINGLE BOX ─────────────────────────────────────
+            if(cfg.countMode === 'box_single'){
+                const bw = Math.min(180, Math.floor(shelfW * 0.55));
+                const bh = Math.min(160, Math.floor(shelfH * 0.55));
+                grid.innerHTML = `
+                    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
+                        ${boxHTML(qty, bw, bh)}
+                    </div>`;
+            }
+
+            // ── 2. BOX + LOOSE ────────────────────────────────────
+            else if(cfg.countMode === 'box_loose'){
+                const looseCount = Math.floor(Math.random() * 5) + 1;
+                const boxCount   = qty - looseCount;
+
+                // Box: 58% height, up to 65% width
+                const bh = Math.floor(shelfH * 0.55);
+                const bw = Math.min(Math.floor(shelfW * 0.65), Math.floor(bh * 1.15));
+
+                // Loose area height = remaining space minus gap
+                const looseAreaH = shelfH - bh - 14;
+                // Each loose item width = evenly split box width
+                const looseW = Math.floor((bw - (looseCount - 1) * 5) / looseCount);
+                // Height capped to available area and to 80% of width (landscape-ish)
+                const looseH = Math.min(looseAreaH, Math.floor(looseW * 0.8));
+
+                let loosePcs = '';
+                for(let i = 0; i < looseCount; i++) loosePcs += looseHTML(looseW, looseH);
+
+                grid.innerHTML = `
+                    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+                            <div style="display:flex;flex-wrap:nowrap;gap:5px;
+                                justify-content:center;align-items:flex-end;
+                                width:${bw}px;overflow:hidden;">
+                                ${loosePcs}
+                            </div>
+                            ${boxHTML(boxCount, bw, bh)}
+                        </div>
+                    </div>`;
+            }
+
+            // ── 3. MULTI BOX — single vertical column ─────────────
+            else if(cfg.countMode === 'box_multi'){
+                const numBoxes  = Math.floor(Math.random()*4)+2;
+                const perBox    = Math.ceil(qty / numBoxes);
+                const realTotal = numBoxes * perBox;
+                document.getElementById('quantityDisplay').textContent = realTotal;
+                currentQuantity = realTotal;
+
+                // Size each box to fit all in one column
+                const gap = 6;
+                const bh  = Math.floor((shelfH - (numBoxes - 1) * gap - 20) / numBoxes);
+                const bw  = Math.min(Math.floor(shelfW * 0.65), Math.floor(bh * 1.15));
+
+                let boxes = '';
+                for(let i=0;i<numBoxes;i++) boxes += `<div>${boxHTML(perBox, bw, bh)}</div>`;
+
+                grid.innerHTML = `
+                    <div style="width:100%;height:100%;display:flex;flex-direction:column;
+                        flex-wrap:nowrap;align-items:center;justify-content:center;gap:${gap}px;padding:8px">
+                        ${boxes}
+                    </div>`;
+            }
+        });
+
+        return;
+    }
+
+    // ── GRID MODE (default) ───────────────────────────────────────
+    const count = Math.min(qty, 50);
+    grid.style.display      = 'grid';
+    grid.style.gridAutoFlow = 'column';   // restore vertical column flow
+
     requestAnimationFrame(()=>{
         const shelfW = shelf.clientWidth  - 16;
         const shelfH = shelf.clientHeight - 16;
 
         if(shelfW < 10 || shelfH < 10){ buildGrid(3, count, svgStr, grid); return; }
 
-        // --- Find all column counts where every cell is visible (min 20px) ---
-        const validCols = [];
-        for(let c = 1; c <= 10; c++){
-            const rows  = Math.ceil(count / c);
-            const cellW = (shelfW - (c - 1) * 4) / c;
-            const cellH = (shelfH - (rows - 1) * 4) / rows;
+        const validRows = [];
+        const maxRowsAllowed = Math.min(count, 10);
+        for(let r = 1; r <= maxRowsAllowed; r++){
+            const cols  = Math.ceil(count / r);
+            const cellW = (shelfW - (cols - 1) * 4) / cols;
+            const cellH = (shelfH - (r   - 1) * 4) / r;
             const size  = Math.min(cellW, cellH);
-            if(size >= 20) validCols.push(c);
+            if(size >= 18) validRows.push(r);
         }
 
-        let chosenCols;
-        if(validCols.length === 0){
-            // Fallback: pick the column count that maximises minimum cell size
+        let chosenRows;
+        if(validRows.length === 0){
             let best = 1, bestSize = 0;
-            for(let c = 1; c <= 10; c++){
-                const rows = Math.ceil(count / c);
-                const size = Math.min((shelfW-(c-1)*4)/c, (shelfH-(rows-1)*4)/rows);
-                if(size > bestSize){ bestSize = size; best = c; }
+            for(let r = 1; r <= count; r++){
+                const cols = Math.ceil(count / r);
+                const size = Math.min((shelfW-(cols-1)*4)/cols, (shelfH-(r-1)*4)/r);
+                if(size > bestSize){ bestSize = size; best = r; }
             }
-            chosenCols = best;
+            chosenRows = best;
         } else {
-            // --- VARY columns randomly among valid options each code ---
-            // This makes each code show a different row layout (2-wide, 3-wide, 4-wide…)
-            chosenCols = validCols[Math.floor(Math.random() * validCols.length)];
+            chosenRows = validRows[Math.floor(Math.random() * validRows.length)];
         }
 
-        const rows  = Math.ceil(count / chosenCols);
-        const cellW = Math.floor((shelfW - (chosenCols - 1) * 4) / chosenCols);
-        const cellH = Math.floor((shelfH - (rows - 1) * 4) / rows);
+        const cols  = Math.ceil(count / chosenRows);
+        const cellW = Math.floor((shelfW - (cols       - 1) * 4) / cols);
+        const cellH = Math.floor((shelfH - (chosenRows - 1) * 4) / chosenRows);
 
-        grid.style.gridTemplateColumns = `repeat(${chosenCols}, ${cellW}px)`;
-        grid.style.gridAutoRows        = `${cellH}px`;
+        grid.style.gridTemplateRows    = `repeat(${chosenRows}, ${cellH}px)`;
+        grid.style.gridTemplateColumns = '';
+        grid.style.gridAutoColumns     = `${cellW}px`;
 
-        buildGrid(chosenCols, count, svgStr, grid);
+        buildGrid(chosenRows, count, svgStr, grid);
     });
 }
 
@@ -954,10 +1091,16 @@ function finishPractice(){
 }
 
 function cancelPractice(){
-    if(confirm('¿Estás seguro de cancelar la práctica?')){
+    if(confirm('¿Cancelar la práctica? Se mostrarán los resultados hasta este punto.')){
         clearInterval(timer); clearInterval(areaCountdownTimer);
-        ['areaPanel','practicePanel'].forEach(id=>document.getElementById(id).classList.add('hidden'));
-        document.getElementById('setupPanel').classList.remove('hidden');
+        document.getElementById('areaPanel').classList.add('hidden');
+        document.getElementById('practicePanel').classList.add('hidden');
+        if(results.length > 0){
+            finishPractice(); // show whatever was collected
+        } else {
+            // Nothing collected yet — just go home
+            document.getElementById('setupPanel').classList.remove('hidden');
+        }
     }
 }
 
