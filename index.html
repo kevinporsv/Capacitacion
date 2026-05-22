@@ -380,6 +380,12 @@
     <!-- ============================== RESULTADOS ============================== -->
     <div id="resultsPanel" class="results-panel hidden">
         <h2>📊 Resultados de la Práctica</h2>
+        <div style="display:flex;justify-content:center;margin-bottom:14px">
+            <div style="background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(217,70,239,.12));padding:14px 36px;border-radius:14px;border:2px solid rgba(99,102,241,.35);text-align:center">
+                <div style="font-size:.78em;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Total General</div>
+                <div id="totalQuantity" style="font-size:2em;color:#6366f1;font-weight:900;margin-top:4px">0</div>
+            </div>
+        </div>
         <table class="results-table">
             <thead><tr><th>#</th><th>Código</th><th>Cantidad</th></tr></thead>
             <tbody id="resultsTableBody"></tbody>
@@ -1071,19 +1077,7 @@ function finishPractice(){
         } else {const c=row.insertCell(1);c.textContent=r.code;c.style.fontFamily="'Courier New',monospace"}
         row.insertCell(2).textContent=r.quantity; total+=r.quantity;
     });
-    // Stats row (Total + Promedio + Máximo + Mínimo) — shown right after the heading
-    const se=document.getElementById('resultsStats'); if(se) se.remove();
-    if(results.length>0){
-        const sd=document.createElement('div'); sd.id='resultsStats';
-        sd.style.cssText='display:flex;justify-content:center;margin-top:14px;margin-bottom:4px';
-        sd.innerHTML=`
-            <div style="background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(217,70,239,.12));padding:14px 36px;border-radius:14px;border:2px solid rgba(99,102,241,.35);text-align:center">
-                <div style="font-size:.78em;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Total General</div>
-                <div style="font-size:2em;color:#6366f1;font-weight:900;margin-top:4px">${total.toLocaleString()}</div>
-            </div>`;
-        const h2=document.querySelector('.results-panel h2');
-        h2.parentNode.insertBefore(sd,h2.nextSibling);
-    }
+    document.getElementById('totalQuantity').textContent = total.toLocaleString();
 }
 
 function cancelPractice(){
