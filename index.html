@@ -546,17 +546,17 @@
         <div id="resultsStatsGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px">
             <!-- Cards populated dynamically -->
         </div>
-        <table class="results-table">
-            <thead><tr id="resultsTableHead"><th>#</th><th>Código</th><th>Cantidad</th></tr></thead>
-            <tbody id="resultsTableBody"></tbody>
-        </table>
-        <div style="margin-top:16px">
+        <div style="margin-bottom:16px">
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
                 <button class="btn btn-success" onclick="exportToExcel()">📊 Excel</button>
                 <button class="btn" onclick="repeatPractice()" style="background:linear-gradient(135deg,#dc263f,#b91c30)">🔁 Repetir</button>
                 <button class="btn btn-secondary" onclick="resetApp()">🏠 Inicio</button>
             </div>
         </div>
+        <table class="results-table">
+            <thead><tr id="resultsTableHead"><th>#</th><th>Código</th><th>Cantidad</th></tr></thead>
+            <tbody id="resultsTableBody"></tbody>
+        </table>
     </div>
 </div>
 
@@ -1580,6 +1580,13 @@ function finishPractice(){
     showSuccessAnimation();
     document.getElementById('practicePanel').classList.add('hidden');
     document.getElementById('resultsPanel').classList.remove('hidden');
+    // Scroll back to top so stats/buttons are always visible first
+    requestAnimationFrame(()=>{
+        document.getElementById('resultsPanel').scrollTop = 0;
+        const cont = document.querySelector('.container');
+        if(cont) cont.scrollTop = 0;
+        window.scrollTo(0,0);
+    });
 
     const tbody = document.getElementById('resultsTableBody'); tbody.innerHTML = '';
     const thead = document.getElementById('resultsTableHead');
