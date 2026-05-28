@@ -442,12 +442,12 @@
         <!-- Validación / Test -->
         <div class="section-title">✅ Modo de Validación</div>
         <div class="toggle-row">
-            <div class="tr-label">🎯 Activar validación (modo test) <small>El practicante digita la cantidad y se evalúa si acertó. Al final muestra % de aciertos.</small></div>
+            <div class="tr-label">🎯 Activar validación de total final <small>Al terminar la práctica se pedirá el total contado por el practicante. El sistema lo comparará con el total real.</small></div>
             <label class="switch"><input type="checkbox" id="validationToggle" onchange="toggleValidation()"><span class="slider"></span></label>
         </div>
         <div id="validationConfig" class="hidden" style="padding:12px 16px;background:rgba(220,38,63,.05);border-radius:10px;border:1px solid rgba(220,38,63,.2);margin-bottom:12px">
             <p style="font-size:.88em;color:#6b7280;line-height:1.5">
-                💡 En este modo aparecerá un campo de entrada donde el practicante debe ingresar la cantidad que ve. El sistema marcará correcto/incorrecto y mostrará la precisión al final.
+                💡 La práctica funciona normalmente. Al final aparecerá un campo donde el practicante deberá ingresar el total de unidades que contó durante toda la sesión. El sistema verificará si coincide con el total real.
             </p>
         </div>
 
@@ -869,31 +869,19 @@ function showCurrentCode(){
     const qMyst  = document.getElementById('quantityMystery');
     const qLabel = document.getElementById('qtyLabel');
     const vWrap  = document.getElementById('validationInputWrap');
-    const vInput = document.getElementById('validationInput');
-    const vFb    = document.getElementById('validationFeedback');
 
-    if(cfg.validation){
-        // Validation mode: practitioner types the quantity
+    // Always hide the per-code validation input (now using final-total validation)
+    if(vWrap) vWrap.classList.add('hidden');
+
+    if(effectiveMode === 'grid_hidden'){
         qDisp.classList.add('hidden');
-        qMyst.classList.add('hidden');
-        vWrap.classList.remove('hidden');
-        vInput.value = '';
-        vFb.textContent = '';
-        vFb.style.color = '';
-        qLabel.textContent = '🎯 Ingresa la cantidad que ves:';
-        setTimeout(()=>vInput.focus(), 50);
+        qMyst.classList.remove('hidden');
+        qLabel.textContent = 'Cantidad a digitar:';
     } else {
-        vWrap.classList.add('hidden');
-        if(effectiveMode === 'grid_hidden'){
-            qDisp.classList.add('hidden');
-            qMyst.classList.remove('hidden');
-            qLabel.textContent = 'Cantidad a digitar:';
-        } else {
-            qDisp.classList.remove('hidden');
-            qDisp.textContent = qty;
-            qMyst.classList.add('hidden');
-            qLabel.textContent = 'Cantidad a digitar:';
-        }
+        qDisp.classList.remove('hidden');
+        qDisp.textContent = qty;
+        qMyst.classList.add('hidden');
+        qLabel.textContent = 'Cantidad a digitar:';
     }
 
     // Progress
@@ -1433,32 +1421,12 @@ function nextCode(){
     clearInterval(timer);
 
     const cur = codes[currentCodeIndex];
-    const cfg = savedConfig;
     const elapsedMs = codeStartTime ? Date.now() - codeStartTime : 0;
-
-    // Handle validation mode
-    let userAnswer = null;
-    let isCorrect = null;
-    if(cfg.validation){
-        const inputVal = document.getElementById('validationInput').value.trim();
-        if(inputVal === ''){
-            // Required to enter a value
-            const fb = document.getElementById('validationFeedback');
-            fb.textContent = '⚠ Ingresa un número antes de continuar';
-            fb.style.color = '#dc263f';
-            document.getElementById('validationInput').focus();
-            return;
-        }
-        userAnswer = parseInt(inputVal);
-        isCorrect = userAnswer === currentQuantity;
-    }
 
     // Build result entry
     const entry = {
         quantity: currentQuantity,
-        elapsedMs,
-        userAnswer,
-        isCorrect
+        elapsedMs
     };
     if(Array.isArray(cur)) entry.codes = cur;
     else entry.code = cur;
@@ -1470,27 +1438,8 @@ function nextCode(){
         results.push(entry);
     }
 
-    // Show brief feedback if validation
-    if(cfg.validation){
-        const fb = document.getElementById('validationFeedback');
-        if(isCorrect){
-            fb.textContent = '✓ ¡Correcto!';
-            fb.style.color = '#10b981';
-            playTone(880, 0.08);
-        } else {
-            fb.textContent = `✗ Era ${currentQuantity}`;
-            fb.style.color = '#dc263f';
-            playTone(220, 0.15);
-        }
-        // Brief pause to let them see the feedback
-        setTimeout(()=>{
-            currentCodeIndex++;
-            showCurrentCode();
-        }, 700);
-    } else {
-        currentCodeIndex++;
-        showCurrentCode();
-    }
+    currentCodeIndex++;
+    showCurrentCode();
 }
 
 function prevCode(){
@@ -1577,10 +1526,91 @@ document.addEventListener('keydown', e=>{
 // ================================================================
 function finishPractice(){
     clearInterval(timer);
-    showSuccessAnimation();
     document.getElementById('practicePanel').classList.add('hidden');
+
+    const cfg = savedConfig;
+    // If validation enabled, first ask the user for their total before showing results
+    if(cfg && cfg.validation){
+        askForFinalTotal();
+    } else {
+        renderResultsPanel(null);
+    }
+}
+
+function askForFinalTotal(){
+    // Show overlay asking for user's counted total
+    let overlay = document.getElementById('totalAskOverlay');
+    if(!overlay){
+        overlay = document.createElement('div');
+        overlay.id = 'totalAskOverlay';
+        overlay.style.cssText = `position:fixed;inset:0;background:rgba(15,31,42,.92);z-index:200;
+            display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);
+            animation:fadeIn .25s ease-out`;
+        overlay.innerHTML = `
+            <div style="background:white;border-radius:20px;padding:32px 28px;max-width:420px;width:90%;
+                box-shadow:0 30px 80px rgba(0,0,0,.5);text-align:center;animation:scaleIn .35s ease-out">
+                <div style="font-size:3em;margin-bottom:8px">🎯</div>
+                <h3 style="font-family:'Sora',sans-serif;color:#1d4153;font-size:1.4em;margin-bottom:10px;font-weight:800">
+                    Validación de Total
+                </h3>
+                <p style="color:#6b7280;font-size:.95em;margin-bottom:18px;line-height:1.5">
+                    ¿Cuál fue el total de unidades que contaste durante toda la práctica?
+                </p>
+                <input type="number" id="finalTotalInput" placeholder="Ingresa el total"
+                    style="width:100%;padding:14px 18px;font-size:1.6em;font-weight:800;text-align:center;
+                    border:3px solid #dc263f;border-radius:12px;color:#1d4153;font-family:'Sora',sans-serif;
+                    outline:none;background:#fafafa;letter-spacing:1px" autocomplete="off">
+                <div id="finalTotalFeedback" style="margin-top:10px;font-size:.9em;font-weight:700;min-height:20px"></div>
+                <button class="btn" onclick="submitFinalTotal()"
+                    style="margin-top:14px;padding:12px 32px;font-size:15px;background:linear-gradient(135deg,#dc263f,#b91c30)">
+                    ✓ Verificar Total
+                </button>
+            </div>`;
+        document.body.appendChild(overlay);
+    } else {
+        overlay.style.display = 'flex';
+        document.getElementById('finalTotalInput').value = '';
+        document.getElementById('finalTotalFeedback').textContent = '';
+    }
+    setTimeout(()=>document.getElementById('finalTotalInput').focus(), 80);
+
+    // Enter key submits
+    document.getElementById('finalTotalInput').onkeydown = (e)=>{
+        if(e.key === 'Enter'){ e.preventDefault(); submitFinalTotal(); }
+    };
+}
+
+function submitFinalTotal(){
+    const inputEl = document.getElementById('finalTotalInput');
+    const fbEl    = document.getElementById('finalTotalFeedback');
+    const val = inputEl.value.trim();
+    if(val === ''){
+        fbEl.textContent = '⚠ Ingresa un número';
+        fbEl.style.color = '#dc263f';
+        inputEl.focus();
+        return;
+    }
+    const userTotal = parseInt(val);
+    const realTotal = results.reduce((s,r) => s + r.quantity, 0);
+    const isCorrect = userTotal === realTotal;
+    const diff = userTotal - realTotal;
+
+    // Hide overlay
+    document.getElementById('totalAskOverlay').style.display = 'none';
+
+    // Play feedback sound
+    if(savedConfig && savedConfig.sound){
+        if(isCorrect) playTone(880, 0.12);
+        else playTone(220, 0.2);
+    }
+
+    // Show results with validation info
+    renderResultsPanel({ userTotal, realTotal, isCorrect, diff });
+}
+
+function renderResultsPanel(validationData){
+    showSuccessAnimation();
     document.getElementById('resultsPanel').classList.remove('hidden');
-    // Scroll back to top so stats/buttons are always visible first
     requestAnimationFrame(()=>{
         document.getElementById('resultsPanel').scrollTop = 0;
         const cont = document.querySelector('.container');
@@ -1590,20 +1620,12 @@ function finishPractice(){
 
     const tbody = document.getElementById('resultsTableBody'); tbody.innerHTML = '';
     const thead = document.getElementById('resultsTableHead');
-    const cfg = savedConfig;
+    thead.innerHTML = '<th>#</th><th>Código</th><th>Cantidad</th><th>Tiempo</th>';
 
-    // Adjust table head depending on validation
-    if(cfg && cfg.validation){
-        thead.innerHTML = '<th>#</th><th>Código</th><th>Real</th><th>Respuesta</th><th>✓</th><th>Tiempo</th>';
-    } else {
-        thead.innerHTML = '<th>#</th><th>Código</th><th>Cantidad</th><th>Tiempo</th>';
-    }
-
-    let total = 0, correctCount = 0, totalTimeMs = 0;
+    let total = 0, totalTimeMs = 0;
     results.forEach((r,i)=>{
         const row = tbody.insertRow();
         row.insertCell(0).textContent = i+1;
-        // Code cell
         if(r.codes && Array.isArray(r.codes)){
             row.insertCell(1).innerHTML = r.codes.map(item=>
                 `<div style="margin:3px 0"><span style="color:#dc263f;font-weight:600;font-size:.83em">${item.columnName}:</span> <span style="font-family:'Courier New',monospace">${item.code}</span></div>`
@@ -1613,20 +1635,9 @@ function finishPractice(){
             c.textContent = r.code;
             c.style.fontFamily = "'Courier New',monospace";
         }
-        // Cantidad / validation cells
-        if(cfg && cfg.validation){
-            row.insertCell(2).textContent = r.quantity;
-            row.insertCell(3).textContent = r.userAnswer !== null ? r.userAnswer : '—';
-            const okCell = row.insertCell(4);
-            if(r.isCorrect === true){ okCell.innerHTML = '<span style="color:#10b981;font-weight:700">✓</span>'; correctCount++; }
-            else if(r.isCorrect === false){ okCell.innerHTML = '<span style="color:#dc263f;font-weight:700">✗</span>'; }
-            else { okCell.textContent = '—'; }
-        } else {
-            row.insertCell(2).textContent = r.quantity;
-        }
-        // Time
+        row.insertCell(2).textContent = r.quantity;
         const tSec = ((r.elapsedMs || 0)/1000).toFixed(1) + 's';
-        const tCell = row.insertCell(cfg && cfg.validation ? 5 : 3);
+        const tCell = row.insertCell(3);
         tCell.textContent = tSec;
         tCell.style.fontSize = '.85em';
         tCell.style.color = '#6b7280';
@@ -1635,28 +1646,41 @@ function finishPractice(){
         totalTimeMs += (r.elapsedMs || 0);
     });
 
-    // Build stats grid
     const statsEl = document.getElementById('resultsStatsGrid');
     const avgTime = results.length ? (totalTimeMs/results.length/1000).toFixed(1) : 0;
     const cards = [];
 
-    cards.push(`
-        <div style="background:linear-gradient(135deg,rgba(29,65,83,.12),rgba(220,38,63,.12));padding:14px;border-radius:14px;border:2px solid rgba(29,65,83,.35);text-align:center">
-            <div style="font-size:.75em;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Total General</div>
-            <div style="font-size:1.8em;color:#1d4153;font-weight:900;margin-top:4px;font-family:'Sora',sans-serif">${total.toLocaleString()}</div>
-        </div>`);
-
-    if(cfg && cfg.validation && results.length > 0){
-        const accuracy = ((correctCount / results.length) * 100).toFixed(1);
-        const accColor = accuracy >= 80 ? '#10b981' : (accuracy >= 60 ? '#f59e0b' : '#dc263f');
+    // VALIDATION CARD (if applicable) — most prominent
+    if(validationData){
+        const { userTotal, realTotal, isCorrect, diff } = validationData;
+        const color = isCorrect ? '#10b981' : '#dc263f';
+        const bg = isCorrect ? 'rgba(16,185,129,.1)' : 'rgba(220,38,63,.1)';
+        const icon = isCorrect ? '✓' : '✗';
+        const msg = isCorrect
+            ? '¡Correcto!'
+            : `Diferencia: ${diff > 0 ? '+' : ''}${diff}`;
         cards.push(`
-            <div style="background:rgba(16,185,129,.08);padding:14px;border-radius:14px;border:2px solid ${accColor};text-align:center">
-                <div style="font-size:.75em;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Precisión</div>
-                <div style="font-size:1.8em;color:${accColor};font-weight:900;margin-top:4px;font-family:'Sora',sans-serif">${accuracy}%</div>
-                <div style="font-size:.75em;color:#6b7280;margin-top:2px">${correctCount} / ${results.length} correctos</div>
+            <div style="background:${bg};padding:14px;border-radius:14px;border:3px solid ${color};text-align:center;grid-column:span 2">
+                <div style="font-size:.75em;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.5px">
+                    ${icon} Validación
+                </div>
+                <div style="font-size:1.8em;color:${color};font-weight:900;margin-top:4px;font-family:'Sora',sans-serif">
+                    ${userTotal} ${isCorrect ? '=' : '≠'} ${realTotal}
+                </div>
+                <div style="font-size:.85em;color:${color};margin-top:2px;font-weight:700">
+                    ${msg}
+                </div>
             </div>`);
     }
 
+    // TOTAL card
+    cards.push(`
+        <div style="background:linear-gradient(135deg,rgba(29,65,83,.12),rgba(220,38,63,.12));padding:14px;border-radius:14px;border:2px solid rgba(29,65,83,.35);text-align:center">
+            <div style="font-size:.75em;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Total Real</div>
+            <div style="font-size:1.8em;color:#1d4153;font-weight:900;margin-top:4px;font-family:'Sora',sans-serif">${total.toLocaleString()}</div>
+        </div>`);
+
+    // TIME
     cards.push(`
         <div style="background:rgba(245,158,11,.08);padding:14px;border-radius:14px;border:2px solid rgba(245,158,11,.4);text-align:center">
             <div style="font-size:.75em;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Tiempo Promedio</div>
@@ -1664,6 +1688,7 @@ function finishPractice(){
             <div style="font-size:.75em;color:#6b7280;margin-top:2px">por código</div>
         </div>`);
 
+    // CODES COUNT
     cards.push(`
         <div style="background:rgba(107,114,128,.08);padding:14px;border-radius:14px;border:2px solid rgba(107,114,128,.3);text-align:center">
             <div style="font-size:.75em;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Códigos</div>
@@ -1676,11 +1701,12 @@ function finishPractice(){
     saveToHistory({
         date: new Date().toISOString(),
         total, count: results.length,
-        accuracy: cfg && cfg.validation ? ((correctCount/results.length)*100).toFixed(1) : null,
-        avgTime, validation: cfg && cfg.validation
+        validation: !!validationData,
+        userTotal: validationData ? validationData.userTotal : null,
+        isCorrect: validationData ? validationData.isCorrect : null,
+        avgTime
     });
 
-    // Clear active session
     clearSession();
 }
 
@@ -1972,8 +1998,10 @@ function renderHistoryList(){
         el.innerHTML = hist.slice(0,5).map(h=>{
             const d = new Date(h.date);
             const dStr = d.toLocaleDateString('es-SV', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
-            const accBadge = h.validation && h.accuracy !== null
-                ? `<span style="background:rgba(16,185,129,.15);color:#10b981;padding:2px 8px;border-radius:10px;font-size:.78em;font-weight:700">${h.accuracy}%</span>`
+            const accBadge = h.validation
+                ? (h.isCorrect
+                    ? `<span style="background:rgba(16,185,129,.15);color:#10b981;padding:2px 8px;border-radius:10px;font-size:.78em;font-weight:700">✓ ${h.userTotal}</span>`
+                    : `<span style="background:rgba(220,38,63,.15);color:#dc263f;padding:2px 8px;border-radius:10px;font-size:.78em;font-weight:700">✗ ${h.userTotal}</span>`)
                 : '';
             return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;background:#f9fafb;border-radius:8px;margin-bottom:4px;border:1px solid #e5e7eb">
                 <span style="color:#1f2937;font-weight:600">${dStr}</span>
