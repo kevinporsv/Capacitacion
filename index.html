@@ -920,6 +920,9 @@ function showCurrentCode(){
     const qLabel = document.getElementById('qtyLabel');
     const vWrap  = document.getElementById('validationInputWrap');
 
+    // Clear any inline display style set by sum mode
+    qDisp.style.display = '';
+
     // Always hide the per-code validation input (now using final-total validation)
     if(vWrap) vWrap.classList.add('hidden');
 
