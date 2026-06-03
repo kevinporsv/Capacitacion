@@ -1199,8 +1199,10 @@ function renderProductShelf(qty){
             // ── 2. BOX + LOOSE ────────────────────────────────────
             else if(effectiveCountMode === 'box_loose'){
                 const maxLooseItems = isMobile ? 4 : 5;
-                const looseCount = Math.floor(Math.random() * maxLooseItems) + 1;
-                const boxCount   = qty - looseCount;
+                // Must leave at least 1 unit for the box → cap loose at qty-1
+                const maxAllowedLoose = Math.max(1, Math.min(maxLooseItems, qty - 1));
+                const looseCount = Math.floor(Math.random() * maxAllowedLoose) + 1;
+                const boxCount   = Math.max(1, qty - looseCount);
 
                 const pctH = isMobile ? 0.5 : 0.5;
                 const pctW = isMobile ? 0.78 : 0.6;
@@ -1255,18 +1257,33 @@ function renderProductShelf(qty){
 
             // ── 3. MULTI BOX — single vertical column, different qty per box ──
             else if(effectiveCountMode === 'box_multi'){
-                const numBoxes = Math.floor(Math.random()*4)+2; // 2-5 boxes
+                // 1-3 cajas máximo (más sería poco realista con pocas unidades por caja)
+                let numBoxes = Math.floor(Math.random()*3)+1; // 1-3 boxes
+                numBoxes = Math.min(numBoxes, qty);
+                numBoxes = Math.max(numBoxes, 1);
 
                 // Distribute qty randomly: each box gets at least 1
-                let remaining = qty;
                 const boxQtys = [];
+                let remaining = qty;
                 for(let i = 0; i < numBoxes - 1; i++){
-                    const maxVal = remaining - (numBoxes - 1 - i);
-                    const val = Math.floor(Math.random() * (maxVal - 1)) + 1;
+                    const boxesLeft = numBoxes - i; // including current
+                    // Max we can take, leaving at least 1 per remaining box
+                    const maxVal = remaining - (boxesLeft - 1);
+                    // Pick a value in [1, maxVal]; guard against maxVal < 1
+                    const val = maxVal >= 1
+                        ? Math.floor(Math.random() * maxVal) + 1
+                        : 1;
                     boxQtys.push(val);
                     remaining -= val;
                 }
-                boxQtys.push(remaining);
+                // Last box gets whatever's left (always ≥ 1 by construction)
+                boxQtys.push(Math.max(1, remaining));
+
+                // Final safeguard: any 0 or negative becomes 1 (shouldn't happen, but...)
+                for(let i = 0; i < boxQtys.length; i++){
+                    if(boxQtys[i] < 1) boxQtys[i] = 1;
+                }
+
                 // Shuffle so order is random
                 for(let i = boxQtys.length-1; i > 0; i--){
                     const j = Math.floor(Math.random()*(i+1));
