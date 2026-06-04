@@ -11,10 +11,30 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         *{margin:0;padding:0;box-sizing:border-box}h1,h2,h3,.header h1,.header p,.stat-badge,.section-title,.shelf-label,.area-label{font-family:"Sora","Helvetica Neue",Helvetica,Arial,sans-serif}
-        body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background:linear-gradient(135deg,#1d4153 0%,#dc263f 100%);min-height:100vh;padding:10px}
-        .container{max-width:1000px;margin:0 auto;background:white;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;height:calc(100vh - 20px);display:flex;flex-direction:column;position:relative;z-index:1;animation:slideIn .5s ease-out}
+        html{height:-webkit-fill-available}
+        body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background:linear-gradient(135deg,#1d4153 0%,#dc263f 100%);min-height:100vh;min-height:100dvh;padding:10px;padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}
+        .container{max-width:1000px;margin:0 auto;background:white;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;height:calc(100vh - 20px);height:calc(100dvh - 20px);display:flex;flex-direction:column;position:relative;z-index:1;animation:slideIn .5s ease-out}
+        @media(max-width:768px){body{padding:0;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}.container{border-radius:0;height:100vh;height:100dvh}}
+
+        /* Collapsible sections */
+        .collapse-section{background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;margin-bottom:8px;overflow:hidden;transition:border-color .2s, box-shadow .2s;flex-shrink:0;position:relative}
+        .collapse-section.active{border-color:#dc263f;box-shadow:0 4px 14px rgba(220,38,63,.1)}
+        .collapse-header{padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:12px;user-select:none;transition:background .15s;min-height:60px}
+        .collapse-header:hover{background:#fafafa}
+        .collapse-section.active .collapse-header{background:linear-gradient(180deg,rgba(220,38,63,.04),transparent)}
+        .collapse-header .ch-icon{font-size:1.15em;flex-shrink:0;width:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;background:rgba(220,38,63,.08);border-radius:9px;text-align:center;line-height:1}
+        .collapse-section.active .collapse-header .ch-icon{background:rgba(220,38,63,.15)}
+        .ch-text-wrap{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px;overflow:hidden}
+        .collapse-header .ch-title{font-weight:700;color:#1d4153;font-family:'Sora',sans-serif;font-size:.95em;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .collapse-header .ch-sub{font-size:.75em;color:#9ca3af;font-weight:500;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .collapse-header .ch-chevron{transition:transform .2s;color:#9ca3af;font-size:.7em;flex-shrink:0;margin-left:auto}
+        .collapse-section.active .collapse-header .ch-chevron{transform:rotate(90deg);color:#dc263f}
+        .collapse-body{max-height:0;overflow:hidden;transition:max-height .3s ease-out;padding:0 14px}
+        .collapse-section.active .collapse-body{max-height:5000px;padding:4px 14px 14px}
+        .collapse-status{font-size:.66em;font-weight:800;padding:3px 9px;border-radius:10px;background:rgba(107,114,128,.1);color:#6b7280;flex-shrink:0;letter-spacing:.4px;text-transform:uppercase}
+        .collapse-status.on{background:rgba(16,185,129,.15);color:#10b981}
+        .collapse-status.off{background:rgba(220,38,63,.08);color:#dc263f}
         @keyframes slideIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
-        @media(max-width:768px){body{padding:0}.container{border-radius:0;height:100vh}}
         .header{background:linear-gradient(135deg,#1d4153 0%,#dc263f 100%);color:white;padding:22px 20px;text-align:center;position:relative;overflow:hidden;flex-shrink:0}
         .header::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(255,255,255,.1) 1px,transparent 1px);background-size:50px 50px;animation:moveBg 20s linear infinite}
         @keyframes moveBg{0%{transform:translate(0,0)}100%{transform:translate(50px,50px)}}
@@ -23,7 +43,7 @@
         @media(max-width:768px){.header{padding:16px 12px}.header h1{font-size:1.4em}}
 
         /* PANELS */
-        .setup-panel{padding:20px;overflow-y:auto;flex:1;display:flex;flex-direction:column;animation:fadeIn .3s}
+        .setup-panel{padding:14px;overflow-y:auto;flex:1;animation:fadeIn .3s}
         .practice-panel{padding:10px;overflow:hidden;flex:1;display:flex;flex-direction:column;animation:fadeIn .3s}        .area-panel{overflow:hidden;flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;background:linear-gradient(135deg,#0f1f2a 0%,#1d4153 100%);animation:fadeIn .3s}
         .results-panel{padding:20px;overflow-y:auto;flex:1;animation:fadeIn .3s}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -269,245 +289,380 @@
 
 <div class="container">
     <div class="header">
-        <div style="position:absolute;top:13px;right:16px;background:rgba(255,255,255,.2);padding:4px 12px;border-radius:20px;font-size:.72em;font-weight:700;backdrop-filter:blur(10px);z-index:2">v4.0</div>
-        <h1>Inventario Pro</h1>
-        <p>Sistema de Entrenamiento para Inventarios</p>
+        <div style="position:absolute;top:13px;left:16px;display:flex;gap:8px;z-index:2">
+            <button onclick="showHelpModal()" title="Atajos de teclado" style="background:rgba(255,255,255,.2);border:none;padding:4px 10px;border-radius:20px;font-size:.85em;font-weight:700;backdrop-filter:blur(10px);color:white;cursor:pointer">?</button>
+            <button onclick="showAchievementsModal()" title="Logros" style="background:rgba(255,255,255,.2);border:none;padding:4px 10px;border-radius:20px;font-size:.85em;font-weight:700;backdrop-filter:blur(10px);color:white;cursor:pointer">🏆</button>
+        </div>
+        <div style="position:absolute;top:13px;right:16px;background:rgba(255,255,255,.2);padding:4px 12px;border-radius:20px;font-size:.72em;font-weight:700;backdrop-filter:blur(10px);z-index:2">v5.0</div>
+        <div id="customLogo" style="position:relative;z-index:1"></div>
+        <h1 id="appTitle">Inventario Pro</h1>
+        <p id="appSubtitle">Sistema de Entrenamiento para Inventarios</p>
     </div>
 
     <!-- ============================== CONFIGURACIÓN ============================== -->
     <div id="setupPanel" class="setup-panel">
 
-        <!-- Cargar códigos -->
-        <div class="form-group">
-            <label>📁 Cargar Códigos:</label>
-            <div style="margin-bottom:12px">
+        <!-- Modo Examen banner (when locked) -->
+        <div id="examModeBanner" class="hidden" style="background:linear-gradient(135deg,#1d4153,#dc263f);color:white;padding:12px 16px;border-radius:12px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <div>
+                <div style="font-weight:800;font-family:'Sora',sans-serif;font-size:.95em">🔒 Modo Examen Activo</div>
+                <div style="font-size:.78em;opacity:.9;margin-top:2px">Configuración bloqueada</div>
+            </div>
+            <button onclick="exitExamMode()" style="background:rgba(255,255,255,.25);border:none;color:white;padding:6px 12px;border-radius:8px;font-size:.8em;font-weight:700;cursor:pointer">Salir</button>
+        </div>
+
+        <!-- ─────────── SECCIÓN 1: CÓDIGOS ─────────── -->
+        <div class="collapse-section active" id="sec-codes">
+            <div class="collapse-header" onclick="toggleSection('sec-codes')">
+                <span class="ch-icon">📁</span>
+                <div class="ch-text-wrap">
+                    <div class="ch-title">Códigos a Practicar</div>
+                    <div class="ch-sub" id="codesStatusSub">Carga un archivo o ingresa manualmente</div>
+                </div>
+                <span class="collapse-status" id="codesCountStatus">0</span>
+                <span class="ch-chevron">▶</span>
+            </div>
+            <div class="collapse-body">
                 <div class="file-upload" onclick="document.getElementById('fileInput').click()">
                     <p>📂 Click para cargar (.txt, .csv o .xlsx)</p>
                     <p class="info-text">O arrastra un archivo aquí</p>
                     <input type="file" id="fileInput" accept=".txt,.csv,.xlsx,.xls">
                 </div>
                 <p id="fileName" class="info-text" style="margin-top:8px;font-weight:600"></p>
-            </div>
 
-            <div id="excelOptions" class="hidden excel-options">
-                <div style="margin-bottom:13px">
-                    <label style="display:flex;align-items:center;cursor:pointer;font-size:.93em">
-                        <input type="checkbox" id="hasHeaderCheckbox" checked style="margin-right:8px;width:17px;height:17px;cursor:pointer">
-                        <span>La primera fila contiene encabezados/títulos</span>
-                    </label>
+                <div id="excelOptions" class="hidden excel-options">
+                    <div style="margin-bottom:13px">
+                        <label style="display:flex;align-items:center;cursor:pointer;font-size:.93em">
+                            <input type="checkbox" id="hasHeaderCheckbox" checked style="margin-right:8px;width:17px;height:17px;cursor:pointer">
+                            <span>La primera fila contiene encabezados</span>
+                        </label>
+                    </div>
+                    <div style="margin-bottom:16px">
+                        <label style="font-weight:700;color:#1d4153;margin-bottom:10px;display:block">📊 Selecciona las columnas de códigos (máx. 3):</label>
+                        <div style="display:grid;gap:12px">
+                            <div><label style="font-size:.88em;color:#6b7280;margin-bottom:4px;display:block">Columna 1:</label><select id="columnSelect1" style="width:100%;padding:11px;border:2px solid #e5e7eb;border-radius:10px;font-size:14px"><option value="">No seleccionada</option></select></div>
+                            <div><label style="font-size:.88em;color:#6b7280;margin-bottom:4px;display:block">Columna 2 (opcional):</label><select id="columnSelect2" style="width:100%;padding:11px;border:2px solid #e5e7eb;border-radius:10px;font-size:14px"><option value="">No seleccionada</option></select></div>
+                            <div><label style="font-size:.88em;color:#6b7280;margin-bottom:4px;display:block">Columna 3 (opcional):</label><select id="columnSelect3" style="width:100%;padding:11px;border:2px solid #e5e7eb;border-radius:10px;font-size:14px"><option value="">No seleccionada</option></select></div>
+                        </div>
+                    </div>
+                    <div id="previewSection" class="hidden" style="margin-top:12px;padding:13px;background:#f9fafb;border-radius:10px;border:1px solid #e5e7eb">
+                        <strong style="display:block;margin-bottom:8px;color:#6b7280;font-size:.87em">📋 Vista previa:</strong>
+                        <div id="previewList" style="font-family:'Courier New',monospace;font-size:.83em;color:#374151;line-height:1.8"></div>
+                    </div>
+                    <p class="info-text" style="margin-top:6px">📊 <span id="previewCount" style="font-weight:700;color:#dc263f">0</span> códigos encontrados</p>
                 </div>
-                <div style="margin-bottom:16px">
-                    <label style="font-weight:700;color:#1d4153;margin-bottom:10px;display:block">📊 Selecciona las columnas de códigos (máx. 3):</label>
-                    <div style="display:grid;gap:12px">
-                        <div><label style="font-size:.88em;color:#6b7280;margin-bottom:4px;display:block">Columna 1:</label><select id="columnSelect1" style="width:100%;padding:11px;border:2px solid #e5e7eb;border-radius:10px;font-size:14px"><option value="">No seleccionada</option></select></div>
-                        <div><label style="font-size:.88em;color:#6b7280;margin-bottom:4px;display:block">Columna 2 (opcional):</label><select id="columnSelect2" style="width:100%;padding:11px;border:2px solid #e5e7eb;border-radius:10px;font-size:14px"><option value="">No seleccionada</option></select></div>
-                        <div><label style="font-size:.88em;color:#6b7280;margin-bottom:4px;display:block">Columna 3 (opcional):</label><select id="columnSelect3" style="width:100%;padding:11px;border:2px solid #e5e7eb;border-radius:10px;font-size:14px"><option value="">No seleccionada</option></select></div>
+
+                <div class="form-group" style="margin-top:14px">
+                    <label>📝 O ingresa códigos manualmente:</label>
+                    <textarea id="manualInput" placeholder="Un código por línea&#10;7501234567890&#10;7501234567891"></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom:0">
+                    <label>🔢 Cantidad de códigos a usar:</label>
+                    <input type="number" id="codeLimit" value="50" min="1" max="10000" inputmode="numeric">
+                </div>
+            </div>
+        </div>
+
+        <!-- ─────────── SECCIÓN 2: PRESENTACIÓN ─────────── -->
+        <div class="collapse-section" id="sec-display">
+            <div class="collapse-header" onclick="toggleSection('sec-display')">
+                <span class="ch-icon">🎨</span>
+                <div class="ch-text-wrap">
+                    <div class="ch-title">Presentación</div>
+                    <div class="ch-sub">Cómo se muestran códigos y cantidades</div>
+                </div>
+                <span class="ch-chevron">▶</span>
+            </div>
+            <div class="collapse-body">
+                <div class="options-grid">
+                    <div class="form-group">
+                        <label>📱 Visualización del código:</label>
+                        <select id="displayMode">
+                            <option value="barcode">📊 Código de Barras</option>
+                            <option value="number">🔢 Código Numérico</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>🔀 Orden de presentación:</label>
+                        <select id="orderMode">
+                            <option value="sequential">→ Secuencial</option>
+                            <option value="random">🎲 Aleatorio</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>📊 Cantidad mínima:</label>
+                        <input type="number" id="minQuantity" value="1" min="1" max="9999" inputmode="numeric">
+                    </div>
+                    <div class="form-group">
+                        <label>📈 Cantidad máxima:</label>
+                        <input type="number" id="maxQuantity" value="20" min="1" max="9999" inputmode="numeric">
+                    </div>
+                    <div class="form-group">
+                        <label>🔢 Paridad:</label>
+                        <select id="quantityParity">
+                            <option value="any">Al azar</option>
+                            <option value="even">Solo pares</option>
+                            <option value="odd">Solo impares</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>🎯 Modo de práctica:</label>
+                        <select id="practiceMode">
+                            <option value="timed">⏱️ Con tiempo límite</option>
+                            <option value="manual">👤 Avance manual</option>
+                        </select>
                     </div>
                 </div>
-                <div id="previewSection" class="hidden" style="margin-top:12px;padding:13px;background:#f9fafb;border-radius:10px;border:1px solid #e5e7eb">
-                    <strong style="display:block;margin-bottom:8px;color:#6b7280;font-size:.87em">📋 Vista previa (primeros 3 registros):</strong>
-                    <div id="previewList" style="font-family:'Courier New',monospace;font-size:.83em;color:#374151;line-height:1.8"></div>
+            </div>
+        </div>
+
+        <!-- ─────────── SECCIÓN 3: TIEMPO ─────────── -->
+        <div class="collapse-section" id="sec-time">
+            <div class="collapse-header" onclick="toggleSection('sec-time')">
+                <span class="ch-icon">⏱️</span>
+                <div class="ch-text-wrap">
+                    <div class="ch-title">Configuración de Tiempo</div>
+                    <div class="ch-sub">Velocidad del entrenamiento</div>
                 </div>
-                <p class="info-text" style="margin-top:6px">📊 <span id="previewCount" style="font-weight:700;color:#dc263f">0</span> códigos encontrados en total</p>
+                <span class="ch-chevron">▶</span>
             </div>
-
-            <div class="info-box">
-                <strong>💡 Formatos soportados:</strong>
-                <ul>
-                    <li><strong>TXT simple:</strong> Un código por línea</li>
-                    <li><strong>TXT/CSV delimitado:</strong> Columnas separadas por comas o tabulaciones</li>
-                    <li><strong>Excel (.xlsx):</strong> Hojas con múltiples columnas</li>
-                </ul>
-            </div>
-            <label style="display:block;margin-bottom:7px;font-weight:600;color:#1f2937;font-size:.93em">O ingresa códigos manualmente (uno por línea):</label>
-            <textarea id="manualInput" placeholder="Ejemplo:&#10;7501234567890&#10;7501234567891&#10;7501234567892"></textarea>
-        </div>
-
-        <!-- Opciones principales -->
-        <div class="options-grid">
-            <div class="form-group">
-                <label>🔢 Cantidad de códigos a usar:</label>
-                <input type="number" id="codeLimit" value="50" min="1" max="10000">
-                <p class="info-text">Límite: 1 a 10,000</p>
-            </div>
-            <div class="form-group">
-                <label>📱 Modo de visualización:</label>
-                <select id="displayMode">
-                    <option value="barcode">Código de Barras</option>
-                    <option value="number">Código Numérico</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>🔀 Orden de presentación:</label>
-                <select id="orderMode">
-                    <option value="sequential">Secuencial</option>
-                    <option value="random">Aleatorio</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>🎯 Modo de práctica:</label>
-                <select id="practiceMode">
-                    <option value="timed">Con tiempo límite</option>
-                    <option value="manual">Avance manual</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>📊 Cantidad mínima:</label>
-                <input type="number" id="minQuantity" value="1" min="1" max="9999">
-            </div>
-            <div class="form-group">
-                <label>📈 Cantidad máxima:</label>
-                <input type="number" id="maxQuantity" value="20" min="1" max="9999">
-            </div>
-            <div class="form-group">
-                <label>🔢 Paridad de cantidad:</label>
-                <select id="quantityParity">
-                    <option value="any">Al azar (cualquier número)</option>
-                    <option value="even">Solo pares (2, 4, 6…)</option>
-                    <option value="odd">Solo impares (1, 3, 5…)</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Tiempo -->
-        <div class="section-title">⏱️ Configuración de Tiempo</div>
-        <div class="toggle-row">
-            <div class="tr-label">🎲 Tiempo aleatorio por código <small>El tiempo varía según la cantidad del código</small></div>
-            <label class="switch"><input type="checkbox" id="randomTimeToggle" onchange="toggleRandomTime()"><span class="slider"></span></label>
-        </div>
-        <div id="fixedTimeGroup" class="form-group">
-            <label>⏱️ Tiempo fijo por código (segundos):</label>
-            <input type="number" id="timePerCode" value="10" min="3" max="120">
-        </div>
-        <div id="randomTimeGroup" class="hidden">
-            <div class="options-grid">
-                <div class="form-group"><label>⏱️ Tiempo mínimo (seg):</label><input type="number" id="timeMin" value="5" min="3" max="60"><p class="info-text">Para cantidades pequeñas</p></div>
-                <div class="form-group"><label>⏱️ Tiempo máximo (seg):</label><input type="number" id="timeMax" value="20" min="5" max="120"><p class="info-text">Para cantidades grandes</p></div>
-            </div>
-            <div class="time-info-badge">🔄 Tiempo escala proporcionalmente con la cantidad</div>
-        </div>
-
-        <!-- Área -->
-        <div class="section-title">🏭 Código de Área (Pantalla previa)</div>
-        <div class="toggle-row">
-            <div class="tr-label">🏷️ Mostrar código de Área antes de iniciar <small>Se muestra por X segundos antes de la primera pregunta</small></div>
-            <label class="switch"><input type="checkbox" id="areaToggle" onchange="toggleAreaConfig()"><span class="slider"></span></label>
-        </div>
-        <div id="areaConfig" class="hidden">
-            <div class="options-grid">
-                <div class="form-group">
-                    <label>🏭 Código de Área (3100–5500):</label>
-                    <input type="number" id="areaCode" value="3100" min="3100" max="5500">
-                    <p class="info-text">Rango: 3100 a 5500</p>
+            <div class="collapse-body">
+                <div class="toggle-row">
+                    <div class="tr-label">🎲 Tiempo aleatorio por código <small>El tiempo varía según la cantidad</small></div>
+                    <label class="switch"><input type="checkbox" id="randomTimeToggle" onchange="toggleRandomTime()"><span class="slider"></span></label>
                 </div>
-                <div class="form-group">
-                    <label>⏳ Tiempo de pantalla (seg):</label>
-                    <input type="number" id="areaTime" value="5" min="1" max="30">
-                    <p class="info-text">Por defecto: 5 segundos</p>
+                <div id="fixedTimeGroup" class="form-group">
+                    <label>⏱️ Tiempo fijo (segundos):</label>
+                    <input type="number" id="timePerCode" value="10" min="3" max="120" inputmode="numeric">
+                </div>
+                <div id="randomTimeGroup" class="hidden">
+                    <div class="options-grid">
+                        <div class="form-group"><label>⏱️ Mínimo (seg):</label><input type="number" id="timeMin" value="5" min="3" max="60" inputmode="numeric"></div>
+                        <div class="form-group"><label>⏱️ Máximo (seg):</label><input type="number" id="timeMax" value="20" min="5" max="120" inputmode="numeric"></div>
+                    </div>
+                    <div class="time-info-badge">🔄 Escala proporcionalmente con la cantidad</div>
+                </div>
+
+                <!-- Dificultad progresiva -->
+                <div class="toggle-row" style="margin-top:10px">
+                    <div class="tr-label">📈 Dificultad progresiva <small>El tiempo se reduce o cantidad aumenta cada N códigos</small></div>
+                    <label class="switch"><input type="checkbox" id="progressiveToggle" onchange="toggleProgressive()"><span class="slider"></span></label>
+                </div>
+                <div id="progressiveConfig" class="hidden" style="padding:10px 14px;background:rgba(220,38,63,.04);border-radius:10px;border:1px solid rgba(220,38,63,.15);margin-bottom:8px">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                        <div>
+                            <label style="font-size:.82em;color:#4b5563;font-weight:600;display:block;margin-bottom:4px">Cada N códigos:</label>
+                            <input type="number" id="progressiveEvery" value="5" min="2" max="20" inputmode="numeric" style="width:100%;padding:7px 10px;border:2px solid #e5e7eb;border-radius:8px">
+                        </div>
+                        <div>
+                            <label style="font-size:.82em;color:#4b5563;font-weight:600;display:block;margin-bottom:4px">¿Qué aumenta?</label>
+                            <select id="progressiveWhat" style="width:100%;padding:7px 10px;border:2px solid #e5e7eb;border-radius:8px">
+                                <option value="time">Reducir tiempo</option>
+                                <option value="qty">Aumentar cantidad</option>
+                                <option value="both">Ambos</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="form-group">
-                <label>📱 Visualización del Área:</label>
-                <select id="areaDisplayMode">
-                    <option value="barcode">Código de Barras</option>
-                    <option value="number">Código Numérico</option>
-                </select>
-            </div>
-            <div class="toggle-row">
-                <div class="tr-label">🎲 Código de Área aleatorio <small>Genera un código al azar entre 3100 y 5500</small></div>
-                <label class="switch"><input type="checkbox" id="areaRandomToggle" onchange="toggleAreaRandom()"><span class="slider"></span></label>
-            </div>
         </div>
 
-        <!-- Imágenes -->
-        <div class="section-title">🖼️ Imágenes de Productos</div>
-        <div class="toggle-row">
-            <div class="tr-label">📸 Mostrar imagen del producto junto al código <small>Muestra una imagen de referencia del artículo a la par del código (una imagen por código)</small></div>
-            <label class="switch"><input type="checkbox" id="imagesToggle" onchange="toggleImagesConfig()"><span class="slider"></span></label>
-        </div>
-        <div id="imagesConfig" class="hidden" style="padding:0;margin-bottom:10px">
-            <div class="form-group" style="margin-top:8px">
-                <label>🗂️ Modo de conteo:</label>
-                <select id="countMode">
-                    <option value="grid">📦 Por filas — productos individuales en grid</option>
-                    <option value="grid_hidden">🔒 Por filas — sin cantidad (el practicante cuenta)</option>
-                    <option value="box_single">📫 Caja sola — una caja con viñeta de cantidad</option>
-                    <option value="box_loose">📫 Caja + sueltos — caja (con viñeta) y productos sueltos encima</option>
-                    <option value="box_multi">📫 Varias cajas — N cajas en fila, cada una con viñeta</option>
-                    <option value="random">🎲 Aleatorio — modo distinto en cada código</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Modo Sumatoria (un solo código) -->
-        <div class="section-title">➕ Modo Sumatoria</div>
-        <div class="toggle-row">
-            <div class="tr-label">🧮 Solo sumar cantidades de un código <small>Escanea el área y un solo código, luego se muestran cantidades/productos para sumar y obtener el total</small></div>
-            <label class="switch"><input type="checkbox" id="sumModeToggle" onchange="toggleSumMode()"><span class="slider"></span></label>
-        </div>
-        <div id="sumModeConfig" class="hidden" style="padding:12px 16px;background:rgba(220,38,63,.05);border-radius:10px;border:1px solid rgba(220,38,63,.2);margin-bottom:12px">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-                <div>
-                    <label style="font-size:.85em;color:#4b5563;font-weight:600;display:block;margin-bottom:4px">Cantidad de elementos:</label>
-                    <input type="number" id="sumCount" value="10" min="2" max="50" style="width:100%;padding:8px 12px;border:2px solid #e5e7eb;border-radius:8px">
+        <!-- ─────────── SECCIÓN 4: ÁREA ─────────── -->
+        <div class="collapse-section" id="sec-area">
+            <div class="collapse-header" onclick="toggleSection('sec-area')">
+                <span class="ch-icon">🏭</span>
+                <div class="ch-text-wrap">
+                    <div class="ch-title">Código de Área</div>
+                    <div class="ch-sub">Pantalla previa con código de zona</div>
                 </div>
-                <div>
-                    <label style="font-size:.85em;color:#4b5563;font-weight:600;display:block;margin-bottom:4px">Tiempo por elemento (seg):</label>
-                    <input type="number" id="sumTimePerNumber" value="3" min="1" max="20" style="width:100%;padding:8px 12px;border:2px solid #e5e7eb;border-radius:8px">
+                <span class="collapse-status off" id="areaStatusBadge">OFF</span>
+                <span class="ch-chevron">▶</span>
+            </div>
+            <div class="collapse-body">
+                <div class="toggle-row">
+                    <div class="tr-label">🏷️ Mostrar código de Área antes de iniciar <small>Se muestra por X segundos antes de la primera pregunta</small></div>
+                    <label class="switch"><input type="checkbox" id="areaToggle" onchange="toggleAreaConfig();updateSectionStatus()"><span class="slider"></span></label>
+                </div>
+                <div id="areaConfig" class="hidden">
+                    <div class="options-grid">
+                        <div class="form-group">
+                            <label>🏭 Código (3100–5500):</label>
+                            <input type="number" id="areaCode" value="3100" min="3100" max="5500" inputmode="numeric">
+                        </div>
+                        <div class="form-group">
+                            <label>⏳ Tiempo (seg):</label>
+                            <input type="number" id="areaTime" value="5" min="1" max="30" inputmode="numeric">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>📱 Visualización:</label>
+                        <select id="areaDisplayMode">
+                            <option value="barcode">Código de Barras</option>
+                            <option value="number">Código Numérico</option>
+                        </select>
+                    </div>
+                    <div class="toggle-row">
+                        <div class="tr-label">🎲 Código aleatorio <small>Genera un código al azar entre 3100 y 5500</small></div>
+                        <label class="switch"><input type="checkbox" id="areaRandomToggle" onchange="toggleAreaRandom()"><span class="slider"></span></label>
+                    </div>
                 </div>
             </div>
-            <div style="margin-bottom:8px">
-                <label style="font-size:.85em;color:#4b5563;font-weight:600;display:block;margin-bottom:4px">¿Qué mostrar en cada paso?</label>
-                <select id="sumDisplayType" style="width:100%;padding:8px 12px;border:2px solid #e5e7eb;border-radius:8px">
-                    <option value="number">🔢 Solo números (cantidad directa)</option>
-                    <option value="products">📦 Productos (el practicante los cuenta)</option>
-                </select>
+        </div>
+
+        <!-- ─────────── SECCIÓN 5: IMÁGENES ─────────── -->
+        <div class="collapse-section" id="sec-images">
+            <div class="collapse-header" onclick="toggleSection('sec-images')">
+                <span class="ch-icon">🖼️</span>
+                <div class="ch-text-wrap">
+                    <div class="ch-title">Imágenes de Productos</div>
+                    <div class="ch-sub">Visualización gráfica de cantidades</div>
+                </div>
+                <span class="collapse-status off" id="imagesStatusBadge">OFF</span>
+                <span class="ch-chevron">▶</span>
             </div>
-            <div class="toggle-row" style="margin-bottom:6px;padding:8px 12px">
-                <div class="tr-label" style="font-size:.85em">🎲 Posición aleatoria en pantalla <small>Cada elemento aparece en una zona diferente de la pantalla</small></div>
-                <label class="switch"><input type="checkbox" id="sumRandomPos"><span class="slider"></span></label>
+            <div class="collapse-body">
+                <div class="toggle-row">
+                    <div class="tr-label">📸 Mostrar imagen del producto <small>Imagen de referencia del artículo junto al código</small></div>
+                    <label class="switch"><input type="checkbox" id="imagesToggle" onchange="toggleImagesConfig();updateSectionStatus()"><span class="slider"></span></label>
+                </div>
+                <div id="imagesConfig" class="hidden">
+                    <div class="form-group" style="margin-top:8px">
+                        <label>🗂️ Modo de conteo:</label>
+                        <select id="countMode">
+                            <option value="grid">📦 Por filas — productos individuales en grid</option>
+                            <option value="grid_hidden">🔒 Por filas — sin cantidad</option>
+                            <option value="box_single">📫 Caja sola — con viñeta</option>
+                            <option value="box_loose">📫 Caja + sueltos</option>
+                            <option value="box_multi">📫 Varias cajas (1–3)</option>
+                            <option value="random">🎲 Aleatorio</option>
+                        </select>
+                    </div>
+                </div>
             </div>
-            <div class="toggle-row" style="margin-bottom:0;padding:8px 12px">
-                <div class="tr-label" style="font-size:.85em">🎯 Validar el total al final <small>Si está apagado, se muestra el total directamente. Si está encendido, se le pide al practicante.</small></div>
-                <label class="switch"><input type="checkbox" id="sumValidate"><span class="slider"></span></label>
+        </div>
+
+        <!-- ─────────── SECCIÓN 6: SUMATORIA ─────────── -->
+        <div class="collapse-section" id="sec-sum">
+            <div class="collapse-header" onclick="toggleSection('sec-sum')">
+                <span class="ch-icon">➕</span>
+                <div class="ch-text-wrap">
+                    <div class="ch-title">Modo Sumatoria</div>
+                    <div class="ch-sub">Sumar cantidades de un solo código</div>
+                </div>
+                <span class="collapse-status off" id="sumStatusBadge">OFF</span>
+                <span class="ch-chevron">▶</span>
+            </div>
+            <div class="collapse-body">
+                <div class="toggle-row">
+                    <div class="tr-label">🧮 Activar modo sumatoria <small>Se muestra un solo código y luego cantidades para sumar</small></div>
+                    <label class="switch"><input type="checkbox" id="sumModeToggle" onchange="toggleSumMode();updateSectionStatus()"><span class="slider"></span></label>
+                </div>
+                <div id="sumModeConfig" class="hidden">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+                        <div>
+                            <label style="font-size:.85em;color:#4b5563;font-weight:600;display:block;margin-bottom:4px">Cantidad de elementos:</label>
+                            <input type="number" id="sumCount" value="10" min="2" max="50" inputmode="numeric" style="width:100%;padding:8px 12px;border:2px solid #e5e7eb;border-radius:8px">
+                        </div>
+                        <div>
+                            <label style="font-size:.85em;color:#4b5563;font-weight:600;display:block;margin-bottom:4px">Tiempo por elemento:</label>
+                            <input type="number" id="sumTimePerNumber" value="3" min="1" max="20" inputmode="numeric" style="width:100%;padding:8px 12px;border:2px solid #e5e7eb;border-radius:8px">
+                        </div>
+                    </div>
+                    <div style="margin-top:10px">
+                        <label style="font-size:.85em;color:#4b5563;font-weight:600;display:block;margin-bottom:4px">¿Qué mostrar?</label>
+                        <select id="sumDisplayType" style="width:100%;padding:8px 12px;border:2px solid #e5e7eb;border-radius:8px">
+                            <option value="number">🔢 Solo números</option>
+                            <option value="products">📦 Productos</option>
+                        </select>
+                    </div>
+                    <div class="toggle-row" style="margin-top:10px;padding:8px 12px">
+                        <div class="tr-label" style="font-size:.85em">🎲 Posición aleatoria en pantalla</div>
+                        <label class="switch"><input type="checkbox" id="sumRandomPos"><span class="slider"></span></label>
+                    </div>
+                    <div class="toggle-row" style="padding:8px 12px">
+                        <div class="tr-label" style="font-size:.85em">🎯 Validar total al final</div>
+                        <label class="switch"><input type="checkbox" id="sumValidate"><span class="slider"></span></label>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Validación / Test -->
-        <div class="section-title">✅ Modo de Validación</div>
-        <div class="toggle-row">
-            <div class="tr-label">🎯 Activar validación de total final <small>Al terminar la práctica se pedirá el total contado por el practicante. El sistema lo comparará con el total real.</small></div>
-            <label class="switch"><input type="checkbox" id="validationToggle" onchange="toggleValidation()"><span class="slider"></span></label>
-        </div>
-        <div id="validationConfig" class="hidden" style="padding:12px 16px;background:rgba(220,38,63,.05);border-radius:10px;border:1px solid rgba(220,38,63,.2);margin-bottom:12px">
-            <p style="font-size:.88em;color:#6b7280;line-height:1.5">
-                💡 La práctica funciona normalmente. Al final aparecerá un campo donde el practicante deberá ingresar el total de unidades que contó durante toda la sesión. El sistema verificará si coincide con el total real.
-            </p>
-        </div>
-
-        <!-- Sonido y Atajos -->
-        <div class="section-title">🔊 Sonido y Notificaciones</div>
-        <div class="toggle-row">
-            <div class="tr-label">🔔 Sonido al cambiar de código <small>Beep corto cuando aparece un nuevo código</small></div>
-            <label class="switch"><input type="checkbox" id="soundToggle" checked><span class="slider"></span></label>
-        </div>
-
-        <!-- Presets -->
-        <div class="section-title">💾 Configuraciones Guardadas</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-            <button class="btn btn-secondary" onclick="savePreset()" style="font-size:13px;padding:10px">💾 Guardar como preset</button>
-            <button class="btn btn-secondary" onclick="loadPresetDialog()" style="font-size:13px;padding:10px">📂 Cargar preset</button>
-        </div>
-        <div id="presetsList" style="font-size:.85em;color:#6b7280"></div>
-
-        <!-- Histórico -->
-        <div class="section-title">📈 Histórico de Prácticas</div>
-        <div id="historyList" style="font-size:.85em">
-            <div style="color:#9ca3af;font-style:italic;text-align:center;padding:8px">Sin prácticas previas</div>
+        <!-- ─────────── SECCIÓN 7: AVANZADO ─────────── -->
+        <div class="collapse-section" id="sec-advanced">
+            <div class="collapse-header" onclick="toggleSection('sec-advanced')">
+                <span class="ch-icon">⚙️</span>
+                <div class="ch-text-wrap">
+                    <div class="ch-title">Validación y Sonido</div>
+                    <div class="ch-sub">Test final, audio</div>
+                </div>
+                <span class="ch-chevron">▶</span>
+            </div>
+            <div class="collapse-body">
+                <div class="toggle-row">
+                    <div class="tr-label">🎯 Validar total final <small>Al terminar se pide el total contado para comparar</small></div>
+                    <label class="switch"><input type="checkbox" id="validationToggle" onchange="toggleValidation()"><span class="slider"></span></label>
+                </div>
+                <div class="toggle-row">
+                    <div class="tr-label">🔔 Sonido al cambiar código <small>Beep corto entre códigos</small></div>
+                    <label class="switch"><input type="checkbox" id="soundToggle" checked><span class="slider"></span></label>
+                </div>
+                <div id="validationConfig" class="hidden" style="padding:10px 14px;background:rgba(220,38,63,.05);border-radius:10px;border:1px solid rgba(220,38,63,.2);margin-top:8px">
+                    <p style="font-size:.85em;color:#6b7280;line-height:1.5">
+                        💡 Al final se preguntará el total que contó el practicante para compararlo con el total real.
+                    </p>
+                </div>
+            </div>
         </div>
 
-        <div style="margin-top:18px">
-            <button class="btn" onclick="startPractice()">🚀 Comenzar Práctica</button>
+        <!-- ─────────── SECCIÓN 8: PRESETS Y HISTÓRICO ─────────── -->
+        <div class="collapse-section" id="sec-data">
+            <div class="collapse-header" onclick="toggleSection('sec-data')">
+                <span class="ch-icon">📊</span>
+                <div class="ch-text-wrap">
+                    <div class="ch-title">Presets, Histórico y Exámenes</div>
+                    <div class="ch-sub">Guardar configuraciones y ver historial</div>
+                </div>
+                <span class="ch-chevron">▶</span>
+            </div>
+            <div class="collapse-body">
+                <label style="font-size:.85em;font-weight:700;color:#1d4153;display:block;margin-bottom:6px">💾 Presets</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+                    <button class="btn btn-secondary" onclick="savePreset()" style="font-size:13px;padding:9px">💾 Guardar</button>
+                    <button class="btn btn-secondary" onclick="loadPresetDialog()" style="font-size:13px;padding:9px">📂 Cargar</button>
+                </div>
+                <div id="presetsList" style="font-size:.85em;color:#6b7280;margin-bottom:14px"></div>
+
+                <label style="font-size:.85em;font-weight:700;color:#1d4153;display:block;margin-bottom:6px">🔒 Modo Examen</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+                    <button class="btn btn-secondary" onclick="generateExamCode()" style="font-size:13px;padding:9px">🔐 Generar código</button>
+                    <button class="btn btn-secondary" onclick="loadExamCodePrompt()" style="font-size:13px;padding:9px">📥 Cargar código</button>
+                </div>
+
+                <label style="font-size:.85em;font-weight:700;color:#1d4153;display:block;margin-bottom:6px">📈 Histórico</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+                    <button class="btn btn-secondary" onclick="exportHistory()" style="font-size:13px;padding:9px">📊 Exportar Excel</button>
+                    <button class="btn btn-secondary" onclick="clearHistory()" style="font-size:13px;padding:9px">🗑️ Limpiar</button>
+                </div>
+                <div id="historyList" style="font-size:.85em">
+                    <div style="color:#9ca3af;font-style:italic;text-align:center;padding:8px">Sin prácticas previas</div>
+                </div>
+
+                <hr style="margin:14px 0;border:none;border-top:1px solid #e5e7eb">
+
+                <label style="font-size:.85em;font-weight:700;color:#1d4153;display:block;margin-bottom:6px">🎨 Personalización</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                    <button class="btn btn-secondary" onclick="customizeApp()" style="font-size:13px;padding:9px">✏️ Logo y nombre</button>
+                    <button class="btn btn-secondary" onclick="resetCustomization()" style="font-size:13px;padding:9px">↺ Restaurar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vista previa de configuración + Botón principal -->
+        <div style="margin-top:14px">
+            <button class="btn" onclick="showConfigPreview()" style="background:linear-gradient(135deg,#dc263f,#b91c30);font-size:15px;padding:14px">
+                🚀 Comenzar Práctica
+            </button>
         </div>
     </div>
 
@@ -807,6 +962,9 @@ function startPractice(){
         sumDisplayType: sumMode ? document.getElementById('sumDisplayType').value : 'number',
         sumRandomPos: sumMode && document.getElementById('sumRandomPos').checked,
         sumValidate: sumMode && document.getElementById('sumValidate').checked,
+        progressive: document.getElementById('progressiveToggle').checked,
+        progressiveEvery: parseInt(document.getElementById('progressiveEvery').value) || 5,
+        progressiveWhat: document.getElementById('progressiveWhat').value,
         startedAt: Date.now()
     };
 
@@ -966,16 +1124,21 @@ function showCurrentCode(){
 //  QUANTITY GENERATOR — respects parity setting
 // ================================================================
 function generateQuantity(min, max, parity){
+    // Apply progressive difficulty if enabled
+    if(savedConfig && savedConfig.progressive && (savedConfig.progressiveWhat === 'qty' || savedConfig.progressiveWhat === 'both')){
+        const level = Math.floor(currentCodeIndex / savedConfig.progressiveEvery);
+        // Each level increases max by 20% (capped at 5x)
+        const mul = Math.min(5, 1 + 0.2 * level);
+        max = Math.floor(max * mul);
+    }
     if(parity === 'any'){
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
-    // Build pool of valid numbers in range
     const pool = [];
     for(let n = min; n <= max; n++){
         if(parity === 'even' && n % 2 === 0) pool.push(n);
         if(parity === 'odd'  && n % 2 !== 0) pool.push(n);
     }
-    // Fallback: if no valid number in range, return any
     if(pool.length === 0) return Math.floor(Math.random() * (max - min + 1)) + min;
     return pool[Math.floor(Math.random() * pool.length)];
 }
@@ -1459,14 +1622,27 @@ function renderSingleCode(code, displayMode, codeDisplay){
 //  TIMER
 // ================================================================
 function calcTime(qty, minQ, maxQ){
-    if(!savedConfig||!savedConfig.useRandomTime) return savedConfig?savedConfig.timePerCode:10;
-    const tMin=savedConfig.timeMin, tMax=savedConfig.timeMax;
-    const qRange=maxQ-minQ;
-    if(qRange<=0) return Math.round((tMin+tMax)/2);
-    const ratio=(qty-minQ)/qRange;
-    const base=tMin+ratio*(tMax-tMin);
-    const jitter=base*.1*(Math.random()*2-1);
-    return Math.max(tMin,Math.min(tMax,Math.round(base+jitter)));
+    let t;
+    if(!savedConfig||!savedConfig.useRandomTime) t = savedConfig?savedConfig.timePerCode:10;
+    else {
+        const tMin=savedConfig.timeMin, tMax=savedConfig.timeMax;
+        const qRange=maxQ-minQ;
+        if(qRange<=0) t = Math.round((tMin+tMax)/2);
+        else {
+            const ratio=(qty-minQ)/qRange;
+            const base=tMin+ratio*(tMax-tMin);
+            const jitter=base*.1*(Math.random()*2-1);
+            t = Math.max(tMin,Math.min(tMax,Math.round(base+jitter)));
+        }
+    }
+    // Apply progressive difficulty (reduce time)
+    if(savedConfig && savedConfig.progressive && (savedConfig.progressiveWhat === 'time' || savedConfig.progressiveWhat === 'both')){
+        const level = Math.floor(currentCodeIndex / savedConfig.progressiveEvery);
+        // Each level reduces time by 10% (floor at 2s)
+        const factor = Math.max(0.3, 1 - 0.1 * level);
+        t = Math.max(2, Math.round(t * factor));
+    }
+    return t;
 }
 
 function startTimer(qty, minQ, maxQ){
@@ -1866,9 +2042,11 @@ function showSuccessAnimation(){
     }
 }
 
-function showToast(msg){
+function showToast(msg, color){
     const t=document.getElementById('toast');
-    t.textContent=msg; t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)';
+    t.textContent=msg;
+    t.style.background = color || '#1d4153';
+    t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)';
     setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(80px)'},2200);
 }
 
@@ -2032,28 +2210,21 @@ function showSumStep(){
 // Render a single sum element inside the shelf, optionally at random position
 function renderSumElement(container, qty, cfg){
     // Reset container styles
-    container.style.display = 'block';
-    container.style.position = 'relative';
     container.style.gridTemplateRows = '';
     container.style.gridTemplateColumns = '';
     container.style.gridAutoColumns = '';
     container.style.gridAutoFlow = '';
     container.style.gap = '';
     container.style.flexDirection = '';
-    container.style.alignItems = '';
-    container.style.justifyContent = '';
     container.innerHTML = '';
 
-    // Decide rendering: number or products
+    // Build the element HTML
     let elementHTML;
     if(cfg.sumDisplayType === 'products'){
-        // Show qty product SVGs in a small grid
         const svgIdx = sumCurrentIndex % PRODUCT_SVGS.length;
         const svgStr = PRODUCT_SVGS[svgIdx];
-        // Up to 12 products visible
         const showCount = Math.min(qty, 12);
-        // Grid: cols depending on count
-        const cols = showCount <= 3 ? showCount : (showCount <= 8 ? 4 : 4);
+        const cols = showCount <= 3 ? showCount : 4;
         const cellSize = showCount <= 4 ? 64 : (showCount <= 8 ? 52 : 44);
         let cells = '';
         for(let i = 0; i < showCount; i++){
@@ -2061,27 +2232,29 @@ function renderSumElement(container, qty, cfg){
         }
         elementHTML = `<div style="display:grid;grid-template-columns:repeat(${cols},${cellSize}px);gap:4px;justify-content:center;align-content:center;padding:8px;background:white;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.1);border:2px solid rgba(220,38,63,.2)">${cells}</div>`;
     } else {
-        // Number display
+        // Number display (no scaleIn animation here — conflicts with positioning)
         elementHTML = `<div style="font-size:3.5em;font-weight:900;color:#dc263f;font-family:'Sora',sans-serif;
             background:white;padding:18px 38px;border-radius:18px;
             border:4px solid #dc263f;box-shadow:0 6px 24px rgba(220,38,63,.3);
-            display:inline-block;letter-spacing:-1px;
-            animation:scaleIn .3s ease-out">${qty}</div>`;
+            display:inline-block;letter-spacing:-1px">${qty}</div>`;
     }
 
     const wrapper = document.createElement('div');
     wrapper.innerHTML = elementHTML;
     const child = wrapper.firstElementChild;
-    child.style.position = 'absolute';
 
     if(cfg.sumRandomPos){
-        // Wait for layout to get container dimensions
+        // Random position: container is positioning context, child is absolute
+        container.style.display = 'block';
+        container.style.position = 'relative';
+        container.style.alignItems = '';
+        container.style.justifyContent = '';
+        child.style.position = 'absolute';
+        container.appendChild(child);
+        // Measure and reposition after layout
         requestAnimationFrame(()=>{
-            container.appendChild(child);
-            // Now measure both and pick a random position that stays inside
             const cw = container.clientWidth, ch = container.clientHeight;
             const ew = child.offsetWidth, eh = child.offsetHeight;
-            // Margin padding so it doesn't touch the edge
             const padding = 8;
             const maxX = Math.max(0, cw - ew - padding * 2);
             const maxY = Math.max(0, ch - eh - padding * 2);
@@ -2091,10 +2264,11 @@ function renderSumElement(container, qty, cfg){
             child.style.top  = y + 'px';
         });
     } else {
-        // Center
-        child.style.left = '50%';
-        child.style.top  = '50%';
-        child.style.transform = 'translate(-50%,-50%)';
+        // Centered: use flexbox on container — no transform tricks needed
+        container.style.display        = 'flex';
+        container.style.alignItems     = 'center';
+        container.style.justifyContent = 'center';
+        container.style.position       = 'relative';
         container.appendChild(child);
     }
 }
@@ -2382,7 +2556,16 @@ function collectCurrentSetupConfig(){
         images: document.getElementById('imagesToggle').checked,
         countMode: document.getElementById('countMode').value,
         validation: document.getElementById('validationToggle').checked,
-        sound: document.getElementById('soundToggle').checked
+        sound: document.getElementById('soundToggle').checked,
+        sumMode: document.getElementById('sumModeToggle').checked,
+        sumCount: document.getElementById('sumCount').value,
+        sumTimePerNumber: document.getElementById('sumTimePerNumber').value,
+        sumDisplayType: document.getElementById('sumDisplayType').value,
+        sumRandomPos: document.getElementById('sumRandomPos').checked,
+        sumValidate: document.getElementById('sumValidate').checked,
+        progressive: document.getElementById('progressiveToggle').checked,
+        progressiveEvery: document.getElementById('progressiveEvery').value,
+        progressiveWhat: document.getElementById('progressiveWhat').value
     };
 }
 
@@ -2409,12 +2592,24 @@ function applySetupConfig(c){
     setVal('countMode', c.countMode);
     setChk('validationToggle', c.validation);
     setChk('soundToggle', c.sound);
+    setChk('sumModeToggle', c.sumMode);
+    setVal('sumCount', c.sumCount);
+    setVal('sumTimePerNumber', c.sumTimePerNumber);
+    setVal('sumDisplayType', c.sumDisplayType);
+    setChk('sumRandomPos', c.sumRandomPos);
+    setChk('sumValidate', c.sumValidate);
+    setChk('progressiveToggle', c.progressive);
+    setVal('progressiveEvery', c.progressiveEvery);
+    setVal('progressiveWhat', c.progressiveWhat);
     // Trigger UI updates
     toggleRandomTime();
     toggleAreaConfig();
     toggleAreaRandom();
     toggleImagesConfig();
     toggleValidation();
+    if(typeof toggleSumMode==='function') toggleSumMode();
+    if(typeof toggleProgressive==='function') toggleProgressive();
+    if(typeof updateSectionStatus==='function') updateSectionStatus();
 }
 
 // --- History ---
@@ -2429,6 +2624,353 @@ function saveToHistory(entry){
     } catch(e){}
 }
 
+// Init: render lists on page load + check resume
+window.addEventListener('load', ()=>{
+    renderPresetsList();
+    renderHistoryList();
+    checkResumeSession();
+    loadCustomization();
+    checkAchievements();
+    updateSectionStatus();
+    initFileNameSection();
+});
+
+// ================================================================
+//  COLLAPSIBLE SECTIONS
+// ================================================================
+function toggleSection(id){
+    const sec = document.getElementById(id);
+    if(sec) sec.classList.toggle('active');
+}
+
+function updateSectionStatus(){
+    // Update visual badges showing on/off status
+    const updates = [
+        ['areaToggle', 'areaStatusBadge'],
+        ['imagesToggle', 'imagesStatusBadge'],
+        ['sumModeToggle', 'sumStatusBadge']
+    ];
+    updates.forEach(([toggleId, badgeId])=>{
+        const t = document.getElementById(toggleId);
+        const b = document.getElementById(badgeId);
+        if(t && b){
+            if(t.checked){ b.textContent = 'ON'; b.className = 'collapse-status on'; }
+            else { b.textContent = 'OFF'; b.className = 'collapse-status off'; }
+        }
+    });
+    // Update codes count
+    updateCodesStatus();
+}
+
+function updateCodesStatus(){
+    const manualLines = document.getElementById('manualInput').value.split('\n').filter(l => l.trim()).length;
+    const excelCount = allExcelCodes.length;
+    const total = excelCount > 0 ? excelCount : manualLines;
+    const badge = document.getElementById('codesCountStatus');
+    const sub = document.getElementById('codesStatusSub');
+    if(badge){
+        badge.textContent = total > 0 ? total + ' códigos' : '0';
+        badge.className = total > 0 ? 'collapse-status on' : 'collapse-status';
+    }
+    if(sub){
+        sub.textContent = total > 0 ? `${total} códigos listos` : 'Carga un archivo o ingresa manualmente';
+    }
+}
+
+function initFileNameSection(){
+    const manual = document.getElementById('manualInput');
+    if(manual) manual.addEventListener('input', updateCodesStatus);
+}
+
+// ================================================================
+//  PROGRESSIVE DIFFICULTY
+// ================================================================
+function toggleProgressive(){
+    document.getElementById('progressiveConfig').classList.toggle('hidden',
+        !document.getElementById('progressiveToggle').checked);
+}
+
+// ================================================================
+//  CONFIG PREVIEW BEFORE STARTING
+// ================================================================
+function showConfigPreview(){
+    // Validate first
+    const manual = document.getElementById('manualInput').value.trim();
+    const hasCodes = manual.length > 0 || allExcelCodes.length > 0;
+    if(!hasCodes){
+        showToast('⚠ Carga o ingresa códigos antes de comenzar', '#dc263f');
+        document.getElementById('sec-codes').classList.add('active');
+        return;
+    }
+
+    const cfg = collectCurrentSetupConfig();
+    const summary = [];
+    summary.push({icon:'📦', label:'Códigos', value:`${manual.split('\n').filter(l=>l.trim()).length || allExcelCodes.length} en total, usar ${cfg.codeLimit}`});
+    summary.push({icon:'📱', label:'Visualización', value: cfg.displayMode === 'barcode' ? 'Código de barras' : 'Numérico'});
+    summary.push({icon:'🔀', label:'Orden', value: cfg.orderMode === 'random' ? 'Aleatorio' : 'Secuencial'});
+    summary.push({icon:'📊', label:'Cantidades', value:`${cfg.minQuantity}–${cfg.maxQuantity} (${cfg.quantityParity === 'any' ? 'al azar' : (cfg.quantityParity === 'even' ? 'pares' : 'impares')})`});
+    summary.push({icon:'🎯', label:'Modo', value: cfg.practiceMode === 'timed' ? 'Con tiempo' : 'Manual'});
+    if(cfg.practiceMode === 'timed'){
+        summary.push({icon:'⏱️', label:'Tiempo', value: cfg.randomTime ? `${cfg.timeMin}–${cfg.timeMax}s` : `${cfg.timePerCode}s fijo`});
+    }
+    if(cfg.area) summary.push({icon:'🏭', label:'Área', value:`${cfg.areaRandom?'Aleatoria':cfg.areaCode} por ${cfg.areaTime}s`});
+    if(cfg.images) summary.push({icon:'🖼️', label:'Imágenes', value: getCountModeLabel(cfg.countMode)});
+    if(cfg.sumMode) summary.push({icon:'➕', label:'Sumatoria', value:`${cfg.sumCount} elementos, ${cfg.sumDisplayType==='products'?'productos':'números'}`});
+    if(cfg.validation) summary.push({icon:'🎯', label:'Validación', value:'Total final activado'});
+    if(document.getElementById('progressiveToggle').checked){
+        summary.push({icon:'📈', label:'Dificultad', value:`Progresiva cada ${document.getElementById('progressiveEvery').value}`});
+    }
+
+    let html = `<div style="background:white;border-radius:18px;padding:24px;max-width:480px;width:92%;
+        box-shadow:0 30px 80px rgba(0,0,0,.5);max-height:85vh;overflow-y:auto;animation:scaleIn .3s">
+        <h3 style="font-family:'Sora',sans-serif;color:#1d4153;font-size:1.3em;font-weight:800;margin-bottom:6px">📋 Vista previa</h3>
+        <p style="color:#6b7280;font-size:.85em;margin-bottom:16px">Revisa la configuración antes de comenzar</p>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">`;
+    summary.forEach(s=>{
+        html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb">
+            <span style="font-size:1.2em;flex-shrink:0">${s.icon}</span>
+            <div style="flex:1;font-size:.85em"><span style="color:#6b7280">${s.label}:</span> <strong style="color:#1d4153">${s.value}</strong></div>
+        </div>`;
+    });
+    html += `</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <button onclick="closeModal()" style="background:#e5e7eb;color:#374151;border:none;padding:12px;border-radius:10px;font-weight:700;cursor:pointer">↩ Volver</button>
+            <button onclick="closeModal();startPractice()" style="background:linear-gradient(135deg,#dc263f,#b91c30);color:white;border:none;padding:12px;border-radius:10px;font-weight:700;cursor:pointer">🚀 Comenzar</button>
+        </div>
+    </div>`;
+    showModal(html);
+}
+
+function getCountModeLabel(m){
+    const map = {grid:'Por filas',grid_hidden:'Por filas (sin cantidad)',box_single:'Caja sola',box_loose:'Caja + sueltos',box_multi:'Varias cajas',random:'Aleatorio'};
+    return map[m] || m;
+}
+
+// ================================================================
+//  GENERIC MODAL
+// ================================================================
+function showModal(innerHTML){
+    let m = document.getElementById('genericModal');
+    if(!m){
+        m = document.createElement('div');
+        m.id = 'genericModal';
+        m.style.cssText = 'position:fixed;inset:0;background:rgba(15,31,42,.85);z-index:300;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);padding:16px';
+        document.body.appendChild(m);
+    }
+    m.style.display = 'flex';
+    m.innerHTML = innerHTML;
+}
+function closeModal(){
+    const m = document.getElementById('genericModal');
+    if(m) m.style.display = 'none';
+}
+
+// ================================================================
+//  HELP & KEYBOARD SHORTCUTS MODAL
+// ================================================================
+function showHelpModal(){
+    const html = `<div style="background:white;border-radius:18px;padding:24px;max-width:460px;width:92%;
+        box-shadow:0 30px 80px rgba(0,0,0,.5);max-height:85vh;overflow-y:auto;animation:scaleIn .3s">
+        <h3 style="font-family:'Sora',sans-serif;color:#1d4153;font-size:1.3em;font-weight:800;margin-bottom:4px">⌨️ Atajos de Teclado</h3>
+        <p style="color:#6b7280;font-size:.85em;margin-bottom:16px">Durante la práctica:</p>
+        <div style="display:flex;flex-direction:column;gap:8px">
+            ${[
+                ['Enter','Avanzar al siguiente código'],
+                ['Espacio','Pausar / Reanudar'],
+                ['Esc','Cancelar práctica'],
+                ['←','Código anterior'],
+                ['→','Código siguiente']
+            ].map(([k,v])=>`
+                <div style="display:flex;align-items:center;gap:12px;padding:8px 12px;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb">
+                    <span style="background:#1d4153;color:white;padding:5px 12px;border-radius:6px;font-family:monospace;font-weight:700;min-width:50px;text-align:center;font-size:.85em">${k}</span>
+                    <span style="font-size:.88em;color:#374151">${v}</span>
+                </div>
+            `).join('')}
+        </div>
+        <h4 style="font-family:'Sora',sans-serif;color:#1d4153;font-size:1em;font-weight:700;margin:18px 0 8px">📱 En la app</h4>
+        <ul style="font-size:.85em;color:#374151;line-height:1.8;padding-left:18px">
+            <li>Toca <strong>?</strong> en cualquier momento para ver esta ayuda</li>
+            <li>Toca <strong>🏆</strong> para ver tus logros</li>
+            <li>Las prácticas se guardan automáticamente si recargas</li>
+        </ul>
+        <button onclick="closeModal()" style="margin-top:14px;width:100%;background:#1d4153;color:white;border:none;padding:11px;border-radius:10px;font-weight:700;cursor:pointer">Entendido</button>
+    </div>`;
+    showModal(html);
+}
+
+// ================================================================
+//  ACHIEVEMENTS
+// ================================================================
+const ACHIEVEMENTS = [
+    {id:'first',          icon:'🎯', name:'Primera Práctica',     desc:'Completa tu primera sesión',           check:h => h.length >= 1},
+    {id:'five',           icon:'⭐', name:'Constancia',             desc:'Completa 5 sesiones',                 check:h => h.length >= 5},
+    {id:'ten',            icon:'🏆', name:'Veterano',                desc:'Completa 10 sesiones',                check:h => h.length >= 10},
+    {id:'perfect',        icon:'💎', name:'Práctica Perfecta',     desc:'Acierta el total exacto',             check:h => h.some(s => s.isCorrect === true)},
+    {id:'fast',           icon:'⚡', name:'Velocidad',                desc:'Promedio menor a 3s por código',      check:h => h.some(s => s.avgTime > 0 && s.avgTime < 3)},
+    {id:'big',            icon:'📦', name:'Gran Inventario',        desc:'Practica con 50+ códigos',            check:h => h.some(s => s.count >= 50)},
+    {id:'sum',            icon:'➕', name:'Sumatoria Maestra',     desc:'Usa el modo sumatoria con éxito',    check:h => h.some(s => s.sumMode && s.isCorrect)},
+    {id:'streak',         icon:'🔥', name:'Racha',                    desc:'3 prácticas correctas seguidas',      check:h => {
+        let streak = 0;
+        for(const s of h){ if(s.isCorrect) { streak++; if(streak>=3) return true; } else streak = 0; }
+        return false;
+    }}
+];
+
+function getEarnedAchievements(){
+    try {
+        const hist = JSON.parse(localStorage.getItem(LS_HISTORY) || '[]');
+        return ACHIEVEMENTS.filter(a => a.check(hist));
+    } catch(e){ return []; }
+}
+
+function checkAchievements(){
+    // Show toast for newly earned
+    const earned = getEarnedAchievements().map(a=>a.id);
+    const known = JSON.parse(localStorage.getItem('invpro_achievements') || '[]');
+    const newly = earned.filter(id => !known.includes(id));
+    if(newly.length > 0){
+        localStorage.setItem('invpro_achievements', JSON.stringify(earned));
+        newly.forEach((id,i)=>{
+            const a = ACHIEVEMENTS.find(x=>x.id===id);
+            if(a) setTimeout(()=>showToast(`🏆 Logro: ${a.icon} ${a.name}`, '#10b981'), i * 1500);
+        });
+    } else {
+        localStorage.setItem('invpro_achievements', JSON.stringify(earned));
+    }
+}
+
+function showAchievementsModal(){
+    const earned = getEarnedAchievements();
+    const earnedIds = new Set(earned.map(a=>a.id));
+    const html = `<div style="background:white;border-radius:18px;padding:24px;max-width:460px;width:92%;
+        box-shadow:0 30px 80px rgba(0,0,0,.5);max-height:85vh;overflow-y:auto;animation:scaleIn .3s">
+        <h3 style="font-family:'Sora',sans-serif;color:#1d4153;font-size:1.3em;font-weight:800;margin-bottom:4px">🏆 Logros</h3>
+        <p style="color:#6b7280;font-size:.85em;margin-bottom:14px">${earned.length} de ${ACHIEVEMENTS.length} desbloqueados</p>
+        <div style="display:flex;flex-direction:column;gap:8px">
+            ${ACHIEVEMENTS.map(a=>{
+                const got = earnedIds.has(a.id);
+                return `<div style="display:flex;align-items:center;gap:12px;padding:10px;background:${got?'rgba(16,185,129,.08)':'#f9fafb'};border-radius:10px;border:2px solid ${got?'#10b981':'#e5e7eb'};opacity:${got?1:0.5}">
+                    <div style="font-size:2em;filter:${got?'none':'grayscale(1)'}">${a.icon}</div>
+                    <div class="ch-text-wrap">
+                        <div style="font-weight:800;color:${got?'#1d4153':'#9ca3af'};font-size:.95em">${a.name}</div>
+                        <div style="font-size:.78em;color:#6b7280">${a.desc}</div>
+                    </div>
+                    ${got?'<span style="color:#10b981;font-size:1.4em;font-weight:900">✓</span>':''}
+                </div>`;
+            }).join('')}
+        </div>
+        <button onclick="closeModal()" style="margin-top:14px;width:100%;background:#1d4153;color:white;border:none;padding:11px;border-radius:10px;font-weight:700;cursor:pointer">Cerrar</button>
+    </div>`;
+    showModal(html);
+}
+
+// ================================================================
+//  EXAM MODE
+// ================================================================
+function generateExamCode(){
+    const cfg = collectCurrentSetupConfig();
+    // Encode config to base64 for shareability
+    const json = JSON.stringify(cfg);
+    const code = btoa(unescape(encodeURIComponent(json)));
+    const html = `<div style="background:white;border-radius:18px;padding:24px;max-width:480px;width:92%;
+        box-shadow:0 30px 80px rgba(0,0,0,.5);animation:scaleIn .3s">
+        <h3 style="font-family:'Sora',sans-serif;color:#1d4153;font-size:1.3em;font-weight:800;margin-bottom:8px">🔒 Código de Examen</h3>
+        <p style="color:#6b7280;font-size:.85em;margin-bottom:14px">Comparte este código para que otros usen la misma configuración (no se puede modificar)</p>
+        <textarea readonly onclick="this.select()" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;font-family:monospace;font-size:.78em;height:80px;resize:none;background:#f9fafb">${code}</textarea>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+            <button onclick="navigator.clipboard.writeText('${code}');showToast('✓ Copiado al portapapeles')" style="background:#1d4153;color:white;border:none;padding:11px;border-radius:10px;font-weight:700;cursor:pointer">📋 Copiar</button>
+            <button onclick="closeModal()" style="background:#e5e7eb;color:#374151;border:none;padding:11px;border-radius:10px;font-weight:700;cursor:pointer">Cerrar</button>
+        </div>
+    </div>`;
+    showModal(html);
+}
+
+function loadExamCodePrompt(){
+    const html = `<div style="background:white;border-radius:18px;padding:24px;max-width:480px;width:92%;
+        box-shadow:0 30px 80px rgba(0,0,0,.5);animation:scaleIn .3s">
+        <h3 style="font-family:'Sora',sans-serif;color:#1d4153;font-size:1.3em;font-weight:800;margin-bottom:8px">📥 Cargar Código de Examen</h3>
+        <p style="color:#6b7280;font-size:.85em;margin-bottom:14px">Pega el código compartido. La configuración se aplicará y quedará bloqueada.</p>
+        <textarea id="examCodeInput" placeholder="Pega el código aquí..." style="width:100%;padding:10px;border:2px solid #dc263f;border-radius:8px;font-family:monospace;font-size:.78em;height:100px;resize:none"></textarea>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+            <button onclick="closeModal()" style="background:#e5e7eb;color:#374151;border:none;padding:11px;border-radius:10px;font-weight:700;cursor:pointer">Cancelar</button>
+            <button onclick="applyExamCode()" style="background:linear-gradient(135deg,#dc263f,#b91c30);color:white;border:none;padding:11px;border-radius:10px;font-weight:700;cursor:pointer">🔒 Aplicar</button>
+        </div>
+    </div>`;
+    showModal(html);
+    setTimeout(()=>document.getElementById('examCodeInput').focus(), 80);
+}
+
+function applyExamCode(){
+    try {
+        const code = document.getElementById('examCodeInput').value.trim();
+        if(!code) return;
+        const json = decodeURIComponent(escape(atob(code)));
+        const cfg = JSON.parse(json);
+        applySetupConfig(cfg);
+        closeModal();
+        document.getElementById('examModeBanner').classList.remove('hidden');
+        document.body.classList.add('exam-mode');
+        // Disable all inputs except start button
+        document.querySelectorAll('#setupPanel input, #setupPanel select, #setupPanel textarea').forEach(el=>el.disabled = true);
+        document.querySelectorAll('#setupPanel button').forEach(el=>{
+            if(!el.onclick || el.onclick.toString().indexOf('exitExamMode') === -1 && el.onclick.toString().indexOf('showConfigPreview') === -1 && el.onclick.toString().indexOf('startPractice') === -1){
+                el.disabled = true;
+            }
+        });
+        showToast('🔒 Modo examen activado');
+    } catch(e){
+        alert('Código inválido');
+    }
+}
+
+function exitExamMode(){
+    if(!confirm('¿Salir del modo examen? Se desbloqueará la configuración.')) return;
+    document.getElementById('examModeBanner').classList.add('hidden');
+    document.body.classList.remove('exam-mode');
+    document.querySelectorAll('#setupPanel input, #setupPanel select, #setupPanel textarea, #setupPanel button').forEach(el=>el.disabled = false);
+    showToast('✓ Modo examen desactivado');
+}
+
+// ================================================================
+//  HISTORY EXPORT & CLEAR
+// ================================================================
+function exportHistory(){
+    try {
+        const hist = JSON.parse(localStorage.getItem(LS_HISTORY) || '[]');
+        if(hist.length === 0){ showToast('⚠ Sin histórico para exportar', '#dc263f'); return; }
+        const wb = XLSX.utils.book_new();
+        const data = hist.map((h,i)=>({
+            'N°':i+1,
+            'Fecha':new Date(h.date).toLocaleString('es-SV'),
+            'Códigos':h.count,
+            'Total':h.total,
+            'Tiempo promedio (s)':h.avgTime,
+            'Validación':h.validation?'Sí':'No',
+            'Total ingresado':h.userTotal||'',
+            'Correcto':h.isCorrect===null?'':(h.isCorrect?'Sí':'No'),
+            'Modo Suma':h.sumMode?'Sí':'No'
+        }));
+        const ws = XLSX.utils.json_to_sheet(data);
+        XLSX.utils.book_append_sheet(wb, ws, 'Histórico');
+        XLSX.writeFile(wb, `historico_inventario_pro_${new Date().toISOString().slice(0,10)}.xlsx`);
+        showToast('✓ Histórico exportado');
+    } catch(e){ alert('Error al exportar: '+e.message); }
+}
+
+function clearHistory(){
+    if(!confirm('¿Borrar todo el histórico de prácticas?')) return;
+    try {
+        localStorage.removeItem(LS_HISTORY);
+        renderHistoryList();
+        showToast('✓ Histórico borrado');
+    } catch(e){}
+}
+
+// ================================================================
+//  HISTORY WITH TRENDS
+// ================================================================
+// Override renderHistoryList to show trends
+const _origRenderHistoryList = typeof renderHistoryList !== 'undefined' ? renderHistoryList : null;
 function renderHistoryList(){
     try {
         const hist = JSON.parse(localStorage.getItem(LS_HISTORY) || '[]');
@@ -2438,20 +2980,32 @@ function renderHistoryList(){
             el.innerHTML = '<div style="color:#9ca3af;font-style:italic;text-align:center;padding:8px">Sin prácticas previas</div>';
             return;
         }
-        el.innerHTML = hist.slice(0,5).map(h=>{
+        el.innerHTML = hist.slice(0,5).map((h,i)=>{
             const d = new Date(h.date);
             const dStr = d.toLocaleDateString('es-SV', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
             const accBadge = h.validation
                 ? (h.isCorrect
-                    ? `<span style="background:rgba(16,185,129,.15);color:#10b981;padding:2px 8px;border-radius:10px;font-size:.78em;font-weight:700">✓ ${h.userTotal}</span>`
-                    : `<span style="background:rgba(220,38,63,.15);color:#dc263f;padding:2px 8px;border-radius:10px;font-size:.78em;font-weight:700">✗ ${h.userTotal}</span>`)
+                    ? `<span style="background:rgba(16,185,129,.15);color:#10b981;padding:2px 8px;border-radius:10px;font-size:.78em;font-weight:700">✓ ${h.userTotal||''}</span>`
+                    : `<span style="background:rgba(220,38,63,.15);color:#dc263f;padding:2px 8px;border-radius:10px;font-size:.78em;font-weight:700">✗ ${h.userTotal||''}</span>`)
                 : '';
+            // Trend vs previous
+            let trend = '';
+            if(i < hist.length - 1 && h.avgTime > 0 && hist[i+1].avgTime > 0){
+                const prev = hist[i+1].avgTime;
+                const curr = h.avgTime;
+                const diff = curr - prev;
+                if(Math.abs(diff) >= 0.3){
+                    if(diff < 0) trend = `<span style="color:#10b981;font-size:.75em" title="Más rápido">▼${Math.abs(diff).toFixed(1)}s</span>`;
+                    else         trend = `<span style="color:#dc263f;font-size:.75em" title="Más lento">▲${diff.toFixed(1)}s</span>`;
+                }
+            }
             return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;background:#f9fafb;border-radius:8px;margin-bottom:4px;border:1px solid #e5e7eb">
-                <span style="color:#1f2937;font-weight:600">${dStr}</span>
-                <span style="display:flex;gap:8px;align-items:center;font-size:.85em;color:#6b7280">
-                    <span>📦 ${h.count}</span>
-                    <span>∑ ${h.total}</span>
-                    <span>⏱ ${h.avgTime}s</span>
+                <span style="color:#1f2937;font-weight:600;font-size:.85em">${dStr}</span>
+                <span style="display:flex;gap:6px;align-items:center;font-size:.82em;color:#6b7280">
+                    <span title="Códigos">📦 ${h.count}</span>
+                    <span title="Total">∑ ${h.total}</span>
+                    <span title="Tiempo promedio">⏱ ${h.avgTime}s</span>
+                    ${trend}
                     ${accBadge}
                 </span>
             </div>`;
@@ -2459,12 +3013,64 @@ function renderHistoryList(){
     } catch(e){}
 }
 
-// Init: render lists on page load + check resume
-window.addEventListener('load', ()=>{
-    renderPresetsList();
-    renderHistoryList();
-    checkResumeSession();
-});
+// ================================================================
+//  CUSTOMIZATION (logo & app name)
+// ================================================================
+function customizeApp(){
+    const html = `<div style="background:white;border-radius:18px;padding:24px;max-width:460px;width:92%;
+        box-shadow:0 30px 80px rgba(0,0,0,.5);animation:scaleIn .3s">
+        <h3 style="font-family:'Sora',sans-serif;color:#1d4153;font-size:1.3em;font-weight:800;margin-bottom:14px">🎨 Personalización</h3>
+        <label style="font-size:.85em;font-weight:700;color:#1d4153;display:block;margin-bottom:4px">Nombre de la app:</label>
+        <input type="text" id="customTitle" value="${document.getElementById('appTitle').textContent}" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;margin-bottom:12px">
+        <label style="font-size:.85em;font-weight:700;color:#1d4153;display:block;margin-bottom:4px">Subtítulo:</label>
+        <input type="text" id="customSubtitle" value="${document.getElementById('appSubtitle').textContent}" style="width:100%;padding:10px;border:2px solid #e5e7eb;border-radius:8px;margin-bottom:12px">
+        <label style="font-size:.85em;font-weight:700;color:#1d4153;display:block;margin-bottom:4px">Logo (imagen):</label>
+        <input type="file" id="customLogoFile" accept="image/*" style="width:100%;padding:8px;border:2px dashed #e5e7eb;border-radius:8px;margin-bottom:12px;font-size:.85em">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <button onclick="closeModal()" style="background:#e5e7eb;color:#374151;border:none;padding:11px;border-radius:10px;font-weight:700;cursor:pointer">Cancelar</button>
+            <button onclick="saveCustomization()" style="background:linear-gradient(135deg,#dc263f,#b91c30);color:white;border:none;padding:11px;border-radius:10px;font-weight:700;cursor:pointer">💾 Guardar</button>
+        </div>
+    </div>`;
+    showModal(html);
+}
+
+function saveCustomization(){
+    const title = document.getElementById('customTitle').value.trim();
+    const subtitle = document.getElementById('customSubtitle').value.trim();
+    const fileInput = document.getElementById('customLogoFile');
+    const custom = { title, subtitle };
+    const finish = ()=>{
+        localStorage.setItem('invpro_custom', JSON.stringify(custom));
+        loadCustomization();
+        closeModal();
+        showToast('✓ Personalización guardada');
+    };
+    if(fileInput && fileInput.files[0]){
+        const reader = new FileReader();
+        reader.onload = (e)=>{ custom.logo = e.target.result; finish(); };
+        reader.readAsDataURL(fileInput.files[0]);
+    } else finish();
+}
+
+function loadCustomization(){
+    try {
+        const c = JSON.parse(localStorage.getItem('invpro_custom') || '{}');
+        if(c.title) document.getElementById('appTitle').textContent = c.title;
+        if(c.subtitle) document.getElementById('appSubtitle').textContent = c.subtitle;
+        if(c.logo){
+            document.getElementById('customLogo').innerHTML = `<img src="${c.logo}" style="max-height:50px;margin-bottom:6px;border-radius:8px;background:white;padding:4px">`;
+        }
+    } catch(e){}
+}
+
+function resetCustomization(){
+    if(!confirm('¿Restaurar personalización por defecto?')) return;
+    localStorage.removeItem('invpro_custom');
+    document.getElementById('appTitle').textContent = 'Inventario Pro';
+    document.getElementById('appSubtitle').textContent = 'Sistema de Entrenamiento para Inventarios';
+    document.getElementById('customLogo').innerHTML = '';
+    showToast('✓ Restaurado');
+}
 </script>
 </body>
 </html>
